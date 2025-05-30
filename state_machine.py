@@ -141,56 +141,7 @@ class StateMachine:
 # ------------------------------------------------------------------
 # Quick demo (adapt as needed)
 if __name__ == "__main__":
-    ''' The user experience starts with a basic username input field. This is either:
-      a) the login screen
-      b) account creation screen
-      In either case, the user will submit their username (TBD on company dropdown -> SSO flow)
-      which will trigger our resolve() call and start our state machine to build context. All
-      states start from the resolver_branch. From there, depending on the ctx values set below, 
-      the next login step will be determined. 
-
-      Action States
-      These come from your backend calls. You pass them into .step(event) when the machine is paused at an action state.
-      # Action states and their possible events
-      action_events = {
-            "resolveUsernameAction":          ["exact", "multiple", "none", "error"],
-            "verifyTempPasswordAction":        ["success", "invalid_password", "account_locked"],
-            "verifyPasswordAction":            ["success", "invalid_password", "account_locked"],
-            "sendResetEmailAction":           ["email_sent"],
-            "checkEmailDomainAction":         ["match", "no_match"],
-            "fetchOrganizationListAction":    ["success", "failure"],
-            "fetchEmployeeIDSuggestionsAction": ["suggestions", "no_suggestions"],
-            "initiateSSOAction":              ["success", "failure"],
-            "logLoginAttemptAction":          ["logged"],
-            "checkAccountLockStatusAction":   ["locked", "unlocked"],
-            "createAccountAction":            ["success", "failure"],
-            "sendUsernameReminderAction":     ["emailed", "failed"],
-            "sendMFACodeAction":              ["code_sent", "error"],
-            "verifyMFACodeAction":            ["valid", "invalid"],
-            "fetchUserPoliciesAction":        ["success", "no_policies"],
-        }
-
-        View States
-        These are user-driven events (buttons, form submits, etc.). Whenever the machine is paused at that view, you call .step("that_event").
-        # View states and their possible user-driven events. 
-        view_events = {
-            "UsernameEntryView":              ["submit_username"],
-            #"UsernameReminderSentView":       ["continue"],
-            "MfaCodeEntryView":               ["submit_code"],
-            "TempPasswordEntryView":          ["submit_password"],
-            "PasswordEntryView":              ["submit_password","forgot_password"],
-            "SetupPasswordView":              ["submit_new_password"],
-            "SSORedirectView":                ["continue"],
-            "LoggedInView":                   [],  # terminal
-            "CreateAccountView":              ["submit_signup"],
-            "AccountCreatedConfirmationView": ["continue"],
-            "ForgotPwView":                   ["submit_email"],
-            "PasswordResetConfirmationView":  ["continue"],
-            "employeeIDCompanyPickerView":    ["organization_selected", "continue"],
-            "organizationPickerView":         ["selected", "continue"],
-            "UnsupportedWorkEmailView":       [],  # terminal
-        }
-
+    '''
         Context Values
         These are set in the initial context and determine the flow. They can be updated by actions or views.
         # Context object keys and their valid values
@@ -235,7 +186,7 @@ if __name__ == "__main__":
 
     sm = StateMachine(ctx)
 
-    # 
+    # Wind your way through the state machine by calling step() with events
     print(sm.step())
     print(sm.step("submit_password"))
     print(sm.step("success"))  # backend returns success

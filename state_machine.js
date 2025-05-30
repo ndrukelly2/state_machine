@@ -1,16 +1,16 @@
-/**
- * stateMachine.js
- * ----------------
- * YAML-driven state-machine runner with detailed console debugging.
- *
- * • Expects `states.yaml` and `transitions.yaml` next to this file.
- * • Prints every decision, action, sub-flow entry, view render, and event consumed.
- *
- * Usage:
- *   npm install js-yaml
- *   node stateMachine.js
- */
 
+/**
+ * state_machine.js
+ * ----------------
+ * YAML‑driven state‑machine runner with detailed console debugging.
+ *
+ *  • Expects `states.yaml` and `transitions.yaml` next to this file.
+ *  • Prints every decision, action, sub‑flow entry, view render, and event consumed.
+ *
+ *  Usage:
+ *      npm install js-yaml
+ *      node state_machine.js
+ */
 const fs   = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
@@ -21,16 +21,18 @@ const TRANS  = yaml.load(fs.readFileSync(path.join(BASE, 'transitions.yaml'), 'u
 
 class StateMachine {
   /**
-   * @param {Object} ctx  – context values, keys lowercase strings
+   * @param {Object} ctx – initial context values (any primitives); values are normalised to lower‑case strings
    */
   constructor(ctx) {
+    // normalise context to lower‑case strings to match Python implementation
     this.ctx = {};
-    for (const [k, v] of Object.entries(ctx)) {
+    for (const [k, v] of Object.entries(ctx || {})) {
       this.ctx[k] = String(v).toLowerCase();
     }
+
     this.cur          = 'resolver_branch'; // start state
-    this.stack        = [];                // sub-flow stack: [ [subflowId, remainingStates], ... ]
-    this.pendingError = null;              // holds error_id between transitions
+    this.stack        = [];                // sub‑flow stack: [ [subflowId, remainingStates], ... ]
+    this.pendingError = null;              // carries error_id between transitions
   }
 
   // ---------- helpers ------------------------------------
@@ -41,7 +43,7 @@ class StateMachine {
       console.log(`[DEBUG] Transition (with error) from '${stateId}' on '${key}' → target='${ent.target}', error_id='${this.pendingError}'`);
       return ent.target;
     }
-    if (ent && typeof ent === 'string') {
+    if (ent) {
       console.log(`[DEBUG] Transition from '${stateId}' on '${key}' → '${ent}'`);
       return ent;
     }
@@ -52,12 +54,12 @@ class StateMachine {
   _enterSubflow(subId) {
     console.log(`[DEBUG] Entering sub-flow '${subId}'`);
     const seq = STATES[subId].flow;
-    this.stack.push([subId, seq.slice(1)]);
+    this.stack.push([subId, seq.slice(1)]);   // push remainder onto stack
     this.cur = seq[0];
   }
 
   _popSubflow() {
-    console.log(`[DEBUG] Exiting sub-flow, popping stack`);
+    console.log('[DEBUG] Exiting sub-flow, popping stack');
     while (this.stack.length) {
       const [sub, rest] = this.stack[this.stack.length - 1];
       if (rest.length) {
@@ -69,20 +71,19 @@ class StateMachine {
       this.stack.pop();
     }
     this.cur = null;
-    console.log(`[DEBUG] No more states, machine finished`);
+    console.log('[DEBUG] No more states, machine finished');
   }
 
   /**
    * Advance the machine by one event.
-   *
-   * @param {string|null} event  – event name or null
+   * @param {string|Object|null} event – event name, event object (special‑case) or null
    * @returns {Object|null} view payload or null if finished
    */
   step(event = null) {
     while (this.cur) {
-      const state   = STATES[this.cur];
-      const stype   = state.type;
-      console.log(`\n[STATE] '${this.cur}' (type=${stype}) | pendingError=${this.pendingError} | event=${event}`);
+      const state = STATES[this.cur];
+      const stype = state.type;
+      console.log(`\n[STATE] '${this.cur}' (type=${stype}) | pending_error=${this.pendingError} | event=${JSON.stringify(event)}`);
 
       // ---------- SWITCH ----------
       if (stype === 'switch') {
@@ -90,24 +91,36 @@ class StateMachine {
         const val  = this.ctx[expr];
         console.log(`[SWITCH] Evaluating '${expr}' → '${val}'`);
         const nxt = this._next(this.cur, val);
-        if (!nxt) throw new Error(`No edge for value '${val}' from switch '${this.cur}'`);
+        if (nxt === null) throw new Error(`No edge for value '${val}' from switch '${this.cur}'`);
         this.cur          = nxt;
         this.pendingError = null;
-        event            = null;
+        event             = null;
         continue;
       }
 
       // ---------- ACTION ----------
       if (stype === 'action') {
-        console.log(`[ACTION] at '${this.cur}', waiting for event${ event ? '' : ' (no event yet)' }`);
-        if (!event) {
-          return { stateId: this.cur, action: true };
+        console.log('[ACTION] at', `'${this.cur}', waiting for event${ event ? '' : ' (no event yet)' }`);
+
+        // SPECIAL-CASE: resolveUsernameAction accepts an object payload
+        if (this.cur === 'resolveUsernameAction' && event !== null && typeof event === 'object') {
+          const evType   = event.type;
+          const newCtx   = event.context || {};
+          for (const [k, v] of Object.entries(newCtx)) {
+            this.ctx[k] = String(v).toLowerCase();
+          }
+          event = evType;  // replace event with its type for transition lookup
         }
+
+        if (event === null) {
+          return { state_id: this.cur, action: true };
+        }
+
         const nxt = this._next(this.cur, event);
-        if (!nxt) throw new Error(`No edge for action '${event}' from '${this.cur}'`);
+        if (nxt === null) throw new Error(`No edge for action '${event}' from '${this.cur}'`);
         this.cur          = nxt;
         this.pendingError = null;
-        event            = null;
+        event             = null;
         continue;
       }
 
@@ -122,25 +135,28 @@ class StateMachine {
       if (stype === 'view') {
         const iface = state.interface;
         console.log(`[VIEW] Rendering interface '${iface}'`);
-        const payload = { stateId: this.cur, interface: iface };
+        const payload = { state_id: this.cur, interface: iface };
+
         if (this.pendingError) {
-          payload.errorId     = this.pendingError;
-          console.log(`[VIEW] Emitting errorId='${this.pendingError}'`);
-          this.pendingError = null;
+          payload.error_id   = this.pendingError;
+          console.log(`[VIEW] Emitting error_id='${this.pendingError}'`);
+          this.pendingError  = null;
         }
-        if (!event) {
+
+        if (event === null) {
           console.log(`[VIEW] Pausing for user event on '${this.cur}'`);
-          return payload;
+          return payload;   // wait for UI event
         }
+
         console.log(`[VIEW] Consuming user event '${event}' on '${this.cur}'`);
         const nxt = this._next(this.cur, event);
-        event     = null;
+        const originalEvent = event;    // preserve for error
+        event = null;
         if (nxt) {
           this.cur = nxt;
           continue;
         }
-        // unrecognized event: throw
-        throw new Error(`No event '${event}' defined for view '${this.cur}'`);
+        throw new Error(`No event '${originalEvent}' defined for view '${this.cur}'`);
       }
 
       throw new Error(`Unknown state type '${stype}' for state '${this.cur}'`);
@@ -152,27 +168,23 @@ class StateMachine {
 }
 
 // ------------------------------------------------------------------
-// Quick demo
+// Quick demo (adapt as needed)
 if (require.main === module) {
-  const exampleCtx = {
-    resolver_match: 'exact',
+  const ctx = {
+    resolver_match: 'multiple',
     flight_access:  'yes',
-    first_login:    'yes',
+    first_login:    'no',
     login_method:   'password',
     identifier_type:'email',
-    domain_match:   'yes'
+    domain_match:   'yes',
   };
 
-  const sm = new StateMachine(exampleCtx);
+  const sm = new StateMachine(ctx);
 
-  // initial view
-  console.log(sm.step());
-  // submit password
-  console.log(sm.step('submit_password'));
-  // backend returns invalid_password
-  console.log(sm.step('invalid_password'));
-  // user clicks forgot password
-  console.log(sm.step('forgot_password'));
+  // drive the state machine with sample events
+  console.log(sm.step());                 // initial view/action
+  console.log(sm.step('submit_password')); // user submits password
+  console.log(sm.step('success'));         // backend returns success
 }
 
 module.exports = StateMachine;
