@@ -1,0 +1,76 @@
+states:
+  # ─── decision nodes ─────────────────────────────────────────
+  resolver_branch:                   { type: switch,        expression: resolver_match }
+  flight_access_switch:              { type: switch,        expression: flight_access }
+  first_login_switch:                { type: switch,        expression: first_login }
+  login_method_first_switch:         { type: switch,        expression: login_method }
+  login_method_returning_switch:     { type: switch,        expression: login_method }
+  non_flight_login_method_switch:    { type: switch,        expression: login_method }
+  username_type_switch:              { type: switch,        expression: identifier_type }
+  domain_flight_access_switch:       { type: switch,        expression: domain_match }
+  organization_picker_result_switch: { type: switch,        expression: organization_picker_result }
+  non_flight_first_login_switch:     { type: switch,        expression: first_login }
+  flight_access_after_domain_switch: { type: switch,        expression: flight_access }
+
+
+  # ─── action nodes ──────────────────────────────────────────
+  resolveUsernameAction:         { type: action }
+  verifyTempPasswordAction:      { type: action }
+  verifyPasswordAction:          { type: action }
+  sendResetEmailAction:          { type: action }
+  fetchOrganizationListAction:   { type: action }
+  initiateSSOAction:             { type: action }
+  logLoginAttemptAction:         { type: action }
+  sendPasswordEmailLinkAction:   { type: action }
+
+  # ─── sub-flows (re-usable chains) ───────────────────────────
+  flight_password_first_login_subflow:
+    type: sub-flow
+    flow:
+      - TempPasswordEntryView
+      - verifyTempPasswordAction
+      - SetupPasswordView
+      - LoggedInView
+
+  flight_password_returning_subflow:
+    type: sub-flow
+    flow:
+      - PasswordEntryView
+      - verifyPasswordAction
+      - LoggedInView
+
+  flight_sso_subflow:
+    type: sub-flow
+    flow:
+      - initiateSSOAction
+      - SSORedirectView
+      - LoggedInView
+
+  non_flight_account_creation_subflow:
+    type: sub-flow
+    flow:
+    - PasswordEmailLinkView
+    - sendPasswordEmailLinkAction
+    - SetupPasswordView
+    - LoggedInView
+
+  forgotPw_subflow:
+    type: sub-flow
+    flow:
+      - ForgotPasswordEmailLinkView
+      - sendResetEmailAction
+      - UpdatePasswordView
+      - LoggedInView
+
+  # ─── atomic UI views (each can display errors) ───────────────
+  UsernameEntryView:              { type: view, interface: usernameEntryUI,              error_id: null }
+  TempPasswordEntryView:          { type: view, interface: tempPasswordEntryUI,          error_id: null }
+  PasswordEntryView:              { type: view, interface: passwordEntryUI,              error_id: null }
+  SetupPasswordView:              { type: view, interface: setupPasswordUI,              error_id: null }
+  UpdatePasswordView:             { type: view, interface: updatePasswordUI,             error_id: null }
+  PasswordEmailLinkView:          { type: view, interface: passwordEmailLinkUI,          error_id: null }
+  SSORedirectView:                { type: view, interface: SSORedirectUI,                error_id: null }
+  LoggedInView:                   { type: view, interface: loggedInUI,                   error_id: null }
+  ForgotPasswordEmailLinkView:    { type: view, interface: forgotPasswordEmailLinkUI,    error_id: null }
+  EmployeeUsernamePromptView:     { type: view, interface: employeeUsernamePromptUI,     error_id: null }
+  OrganizationPickerView:         { type: view, interface: organizationPickerUI,         error_id: null }

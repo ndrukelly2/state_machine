@@ -1,0 +1,127 @@
+transitions:
+  # ─── initial resolve split ─────────────────────────────────
+  resolver_branch:
+    exact:    flight_access_switch
+    multiple: OrganizationPickerView
+    none:     username_type_switch
+
+  # ─── EXACT branch (account exists) ────────────────────────
+  flight_access_switch:
+    "yes": first_login_switch
+    "no":  non_flight_login_method_switch
+
+  first_login_switch:
+    "yes": login_method_first_switch
+    "no":  login_method_returning_switch
+
+  # ─── FIRST-LOGIN flights → temp-password flow ─────────────
+  login_method_first_switch:
+    sso:      flight_sso_subflow
+    password: flight_password_first_login_subflow
+
+  # ─── RETURNING flights → standard password screen ──────────
+  login_method_returning_switch:
+    sso:      flight_sso_subflow
+    password: flight_password_returning_subflow
+
+  # ─── Non-Flight → account creation screen ──────────
+  non_flight_login_method_switch:
+    #sso:      flight_sso_subflow
+    password: non_flight_first_login_switch
+
+  
+  # ─── NON-FLIGHT password  →  first-login? -------------------
+  non_flight_first_login_switch:
+    "yes":  non_flight_account_creation_subflow  # account-creation flow
+    "no":   flight_password_returning_subflow    # normal returning pwd flow
+
+
+  # ─── MULTIPLE branch (user picks an org) ──────────────────
+  OrganizationPickerView:
+    organization_selected: resolveUsernameAction
+    #continue: organization_picker_result_switch
+
+  # ─── NONE branch (help the user) ──────────────────────────
+  username_type_switch:
+    email:      domain_flight_access_switch
+    employeeid: EmployeeUsernamePromptView #EmployeeIDCompanyPickerView
+
+  domain_flight_access_switch:
+    "yes": flight_access_after_domain_switch   # ← run one more test
+    "no":  non_flight_account_creation_subflow
+
+  flight_access_after_domain_switch:
+    "yes": EmployeeUsernamePromptView          # flight org → tips
+    "no":  non_flight_account_creation_subflow # non-flight → create account
+
+  # ─── employeeUsernamePromptView now restarts resolve on submit_username
+  EmployeeUsernamePromptView:
+    submit_username_company:    resolveUsernameAction
+
+  # ─── Credential verification (action) ─────────────────────
+  verifyTempPasswordAction:
+    success:          SetupPasswordView
+    invalid_password: { target: TempPasswordEntryView, error_id: LOGIN_PW_001 }
+    account_locked:   { target: TempPasswordEntryView, error_id: LOGIN_LOCK_002 }
+    forgot_password:  forgotPw_subflow
+
+  verifyPasswordAction:
+    success:          LoggedInView
+    invalid_password: { target: PasswordEntryView, error_id: LOGIN_PW_001 }
+    account_locked:   { target: PasswordEntryView, error_id: LOGIN_LOCK_002 }
+    forgot_password:  forgotPw_subflow
+
+  resolveUsernameAction:
+    exact:    resolver_branch
+    multiple: resolver_branch
+    # first‐time “none” still just shows the prompt (no error)
+    none:
+      target: EmployeeUsernamePromptView
+    # on a retry failure, stay on the prompt with an error code
+    error:
+      target: EmployeeUsernamePromptView
+      error_id: RESOLVE_NO_MATCH_001
+
+  initiateSSOAction:
+    success: SSORedirectView
+    failure: PasswordEntryView
+
+  logLoginAttemptAction:
+    logged: LoggedInView
+
+  sendPasswordEmailLinkAction:
+    email_sent: SetupPasswordView
+    error:      { target: PasswordEmailLinkView, error_id: EMAIL_LINK_ERR }
+
+  sendResetEmailAction:
+    success: UpdatePasswordView
+    error:      { target: ForgotPasswordEmailLinkView, error_id: EMAIL_LINK_ERR }
+
+  # ─── View transitions (explicit events) ────────────────────
+  UsernameEntryView:
+    submit_username: resolveUsernameAction
+
+  PasswordEntryView:
+    submit_password: verifyPasswordAction
+    forgot_password: forgotPw_subflow
+
+  TempPasswordEntryView:
+    submit_password: verifyTempPasswordAction
+
+  SSORedirectView:
+    continue: LoggedInView
+
+  ForgotPasswordEmailLinkView:
+    submit_email: sendResetEmailAction
+
+  PasswordEmailLinkView:
+    passwordEmailLinkSuccess: SetupPasswordView
+
+  SetupPasswordView:
+    createPassword: LoggedInView
+
+  UpdatePasswordView:
+    updatePassword: LoggedInView
+
+  # MfaCodeEntryView:
+  #   submit_code: verifyMFACodeAction
