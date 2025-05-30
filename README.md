@@ -58,8 +58,7 @@ To run the test suite that picks up all tests defined in tests.yaml:
 
 ### JavaScript [this is translated from the python code and is untested]
 You'll need Node.js and npm installed. Install the `js-yaml` dependency:
-```sh
-npm install js-yaml
+```npm install js-yaml```
 
 To run the code you can set vars at bottom of state_machine.py file and run it:
 ```node state_machine.js```
