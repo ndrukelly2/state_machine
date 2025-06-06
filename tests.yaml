@@ -2,13 +2,6 @@ tests:
   ###############################################################
   # ===  SECTION 1 : resolver_match == exact                 ===
   ###############################################################
-    #
-    # Each EXACT test:
-    #   1. Starts at organizationPickerView (first view)
-    #   2. User fires `organization_selected`
-    #   3. We re-run resolveUsernameAction with a rich event
-    #   4. Flow continues with fresh context
-    #
 
   # ---------- EXACT → flight org • first-login pwd ----
   - id: EXACT_FL_FIRST_PASS_E
@@ -22,7 +15,8 @@ tests:
     events:
       - submit_password     # TempPasswordView → createPasswordAction
       - success             # verifyPasswordAction → SetupPasswordView  
-      - createPassword      # SetupPasswordView → LoggedInView
+      - createPassword      # SetupPasswordView → createPasswordAction
+      - success             # createPasswordAction → LoggedInView
 
   # ---------- EXACT → flight org • first-login sso ----
   - id: EXACT_FL_FIRST_SSO_E
@@ -111,7 +105,8 @@ tests:
     events:
       - submit_password       # TempPasswordView → createPasswordAction
       - success               # verifyPasswordAction → SetupPasswordView
-      - createPassword        # SetupPasswordView → LoggedInView
+      - createPassword      # SetupPasswordView → createPasswordAction
+      - success             # createPasswordAction → LoggedInView
 
   # ---------- EXACT → flight org • returning sso (EmployeeID) ----
   - id: EXACT_FL_RET_SSO_ID
@@ -138,19 +133,176 @@ tests:
       - forgot_password   # PasswordEntryView → ForgotPasswordEmailLinkView
       - submit_email      # ForgotPasswordEmailLinkView → sendResetEmailAction
       - success           # sendResetEmailAction → UpdatePasswordView
-      - updatePassword   # UpdatePasswordView → LoggedInView
+      - updatePassword    # UpdatePasswordView → UpdatePasswordAction
+      - success           # UpdatePasswordAction → LoggedInView
 
+  # ------------------------------------------------------------#
+  # -------------------- Error States --------------------------#
+  # ------------------------------------------------------------#
+
+    # ---------- EXACT → flight org • first-login pwd [Error] ----
+  - id: EXACT_FL_FIRST_PASS_E_ERROR
+    description: "Initial | Exact match. Context |Flight access, First login, Password auth, Email identifier [Error]."
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "yes"
+      login_method: password
+      identifier_type: email
+    events:
+      - submit_password     # TempPasswordView → createPasswordAction
+      - invalid_password    # verifyPasswordAction → SetupPasswordView  
+
+  # ---------- EXACT → flight org • first-login sso [Error] ----
+  - id: EXACT_FL_FIRST_SSO_E_ERROR
+    description: "Initial | Exact match. Context |Flight access, First login, SSO auth, Email identifier [Error]."
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "yes"
+      login_method: sso
+      identifier_type: email
+    events:
+      - success # initiateSSOAction → SSORedirectView
+      - failure # SSORedirectView → UsernameEntryView [Error]
+
+  # ---------- EXACT → flight org • returning pwd [Error] ----
+  - id: EXACT_FL_RET_PASS_E_ERROR
+    description: "Initial | Exact match. Context |Flight access, Returning user, Password auth, Email identifier [Error]"
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+    events:
+      - submit_password     # PasswordEntryView → verifyPasswordAction
+      - invalid_password    # verifyPasswordAction → LoggedInView
+
+  # ---------- EXACT → non-flight org • returning pwd [Error] ----
+  - id: EXACT_NFL_RET_PASS_E_ERROR
+    description: "Initial | Exact match. Context |Non-flight access, Returning user, Password auth, Email identifier [Error]"
+    context:
+      resolver_match: exact
+      flight_access: "no"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+    events:
+      - submit_password    # PasswordEntryView → verifyPasswordAction
+      - invalid_password    # verifyPasswordAction → LoggedInView
+
+  # ---------- EXACT → flight org • returning sso [Error] (Does this have an error?)  ----
+  - id: EXACT_FL_RET_SSO_E_ERROR
+    description: "Initial | Exact match. Context |Flight access, Returning user, SSO auth, Email identifier [Error]"
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: sso
+      identifier_type: email
+    events:
+      - success # initiateSSOAction → SSORedirectView
+      - failure # SSORedirectView → UsernameEntryView [Error]
+
+  # ---------- EXACT → flight org • first-login sso (EmployeeID) [Error] ----
+  - id: EXACT_FL_FIRST_SSO_ID_ERROR
+    description: "Initial | Exact match. Context |Flight access, First login, SSO auth, EmployeeID identifier [Error]."
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "yes"
+      login_method: sso
+      identifier_type: employeeid
+    events:
+      - success # initiateSSOAction → SSORedirectView
+      - failure # SSORedirectView → UsernameEntryView [Error]
+
+  # ---------- EXACT → flight org • returning pwd (EmployeeID) [Error] ----
+  - id: EXACT_FL_RET_PASS_ID_ERROR
+    description: "Initial | Exact match. Context |Flight access, Returning user, Password auth, EmployeeID identifier [Error]."
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: employeeid
+    events:            
+      - submit_password       # TempPasswordView → verifyPasswordAction
+      - invalid_password      # verifyPasswordAction → verifyPasswordAction
+
+  # ---------- EXACT → flight org • first-login pwd (EmployeeID) [Error] ----
+  - id: EXACT_FL_FIRST_PASS_ID_ERROR
+    description: "Initial | Exact match. Context |Flight access, First login, Password auth, EmployeeID identifier [Error]."
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "yes"
+      login_method: password
+      identifier_type: employeeid
+    events:
+      - submit_password       # TempPasswordView → verifyPasswordAction
+      - invalid_password      # verifyPasswordAction → verifyPasswordAction
+
+  # ---------- EXACT → flight org • returning sso (EmployeeID) [sso Error] ----
+  - id: EXACT_FL_RET_SSO_ID_ERROR
+    description: "Initial | Exact match. Context |Flight access, Returning user, SSO auth, EmployeeID identifier [Error]."
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: sso
+      identifier_type: employeeid
+    events:
+      - success       # initiateSSOAction → SSORedirectView
+      - failure       # SSORedirectView → UsernameEntryView [Error]
+
+  ##---------- EXACT → flight org • returning sso (EmployeeID) [sso cancel Error] ----
+  - id: EXACT_FL_RET_SSO_ID_ERROR_CANCEL
+    description: "Initial | Exact match. Context |Flight access, Returning user, SSO auth, EmployeeID identifier [Cancel Error]."
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: sso
+      identifier_type: employeeid
+    events:
+      - success       # initiateSSOAction → SSORedirectView
+      - cancelled     # SSORedirectView → UsernameEntryView [Cancel Error]
+
+  ## ---------- EXACT → flight org • returning password (email) | forgot password [Error] ----
+  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_ERROR
+    description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password [Error]"
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+    events:
+      - forgot_password   # PasswordEntryView → ForgotPasswordEmailLinkView
+      - submit_email      # ForgotPasswordEmailLinkView → sendResetEmailAction
+      - error             # sendResetEmailAction → ForgotPasswordEmailLinkView
+
+  ## ---------- EXACT → flight org • returning password (email) | forgot password ----
+  - id: EXACT_FL_RET_PASS_E_FORGOT_PW
+    description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password"
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+    events:
+      - forgot_password   # PasswordEntryView → ForgotPasswordEmailLinkView
+      - submit_email      # ForgotPasswordEmailLinkView → sendResetEmailAction
+      - success           # sendResetEmailAction → UpdatePasswordView
+      - updatePassword    # UpdatePasswordView → UpdatePasswordAction
+      - failure           # UpdatePasswordAction → UpdatePasswordView
 
   ###############################################################
   # ===  SECTION 2 : resolver_match == multiple               ===
   ###############################################################
-    #
-    # Each MULTIPLE test:
-    #   1. Starts at organizationPickerView (first view)
-    #   2. User fires `organization_selected`
-    #   3. We re-run resolveUsernameAction with a rich event
-    #   4. Flow continues with fresh context
-    #
 
   # ---------- MULTIPLE → flight org • returning pwd ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_E
@@ -225,7 +377,8 @@ tests:
           identifier_type: email
       - submit_password     # TempPasswordView → createPasswordAction
       - success             # verifyPasswordAction → SetupPasswordView 
-      - createPassword      # SetupPasswordView → LoggedInView
+      - createPassword      # SetupPasswordView → createPasswordAction
+      - success             # createPasswordAction → LoggedInView
 
   # ---------- MULTIPLE → flight org • first-login pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_PASS_ID
@@ -243,9 +396,10 @@ tests:
           first_login: "yes"
           login_method: password
           identifier_type: employeeid
-      - submit_password
-      - success
-      - createPassword
+      - submit_password     # TempPasswordView → createPasswordAction
+      - success             # verifyPasswordAction → SetupPasswordView 
+      - createPassword      # SetupPasswordView → createPasswordAction
+      - success             # createPasswordAction → LoggedInView
 
   # ---------- MULTIPLE → flight org • first-login sso (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_ID
@@ -302,6 +456,109 @@ tests:
       - submit_password
       - success
 
+  # ------------------------------------------------------------#
+  # -------------------- Error States --------------------------#
+  # ------------------------------------------------------------#
+
+    # # ---------- MULTIPLE → flight org • returning pwd • Forgot Passwd----
+  - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_E_FORGOT_PW
+    description: "Initial | Multiple matches (Email identifier). Event: organization_selected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, Email identifier), forgot password."
+    context:
+      resolver_match: multiple
+      identifier_type: email
+    events:
+      - organization_selected    # OrganizationPickerView → resolveUsernameAction
+      -
+        type: exact
+        context:
+          resolver_match: exact
+          flight_access: "yes"
+          first_login: "no"
+          login_method: password
+          identifier_type: email
+      - submit_password       # PasswordEntryView → verifyPasswordAction
+      - invalid_password      # verifyPasswordAction → SetupPasswordView
+      - submit_password       # PasswordEntryView → verifyPasswordAction
+      - success               # verifyPasswordAction → LoggedInView 
+
+  # # ---------- MULTIPLE → flight org • first-login sso • Forgot Password ----
+  - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E_FORGOT_PW
+    description: "Initial | Multiple matches (Email identifier). Event: organization_selected returns multiple; resolve again yields exact match (Flight access, First login, SSO auth, Email identifier), forgot password."
+    context:
+      resolver_match: multiple
+      identifier_type: email
+    events:
+      - organization_selected         # OrganizationPickerView → resolveUsernameAction
+      -
+        type: exact
+        context:
+          resolver_match: exact
+          flight_access: "yes"
+          first_login: "yes"
+          login_method: sso
+          identifier_type: email
+      - success # initiateSSOAction → SSORedirectView
+      - failure # SSORedirectView → UsernameEntryView [Error] 
+
+    # # ---------- MULTIPLE → flight org • first-login sso • Cancel SSO ----
+  - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E_CANCEL_SSO
+    description: "Initial | Multiple matches (Email identifier). Event: organization_selected returns multiple; resolve again yields exact match (Flight access, First login, SSO auth, Email identifier), cancel SSO."
+    context:
+      resolver_match: multiple
+      identifier_type: email
+    events:
+      - organization_selected         # OrganizationPickerView → resolveUsernameAction
+      -
+        type: exact
+        context:
+          resolver_match: exact
+          flight_access: "yes"
+          first_login: "yes"
+          login_method: sso
+          identifier_type: email
+      - success # initiateSSOAction → SSORedirectView
+      - cancelled # SSORedirectView → UsernameEntryView [Cancel Error] 
+
+  # ---------- MULTIPLE → flight org • first-login pwd (EmployeeID) ----
+  - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_PASS_ID
+    description: "Initial | Multiple matches (Email identifier). Event: organization_selected returns multiple; resolve again yields exact match (Flight access, First login, Password auth, EmployeeID identifier)."
+    context:
+      resolver_match: multiple
+      identifier_type: email
+    events:
+      - organization_selected
+      -
+        type: exact
+        context:
+          resolver_match: exact
+          flight_access: "yes"
+          first_login: "yes"
+          login_method: password
+          identifier_type: employeeid
+      - submit_password     # TempPasswordView → createPasswordAction
+      - success             # verifyPasswordAction → SetupPasswordView 
+      - createPassword      # SetupPasswordView → createPasswordAction
+      - failure             # createPasswordAction → SetupPasswordView
+
+  # ---------- MULTIPLE → flight org • returning pwd (EmployeeID) ----
+  - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_ID
+    description: "Initial | Multiple matches (Email identifier). Event: organization_selected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, EmployeeID identifier)."
+    context:
+      resolver_match: multiple
+      identifier_type: email
+    events:
+      - organization_selected
+      -
+        type: exact
+        context:
+          resolver_match: exact
+          flight_access: "yes"
+          first_login: "no"
+          login_method: password
+          identifier_type: employeeid
+      - submit_password       # PasswordEntryView → verifyPasswordAction
+      - invalid_password      # verifyPasswordAction → PasswordEntryView
+
   # ###############################################################
   # # ===  SECTION 3 : resolver_match == none                   ===
   # ###############################################################
@@ -344,21 +601,10 @@ tests:
           first_login: "yes"
           login_method: password
           identifier_type: employeeid
-      - submit_password              # TempPasswordView → createPasswordAction
-      - success                      # verifyPasswordAction → SetupPasswordView
-      - createPassword               # SetupPasswordView → LoggedInView
-
-  - id: NONE_FL_E_DMY_SUBMITUSER_THEN_ERROR_NONE_FL_E_DMY
-    description: "Initial | No match (Flight access, Email identifier, Domain match Yes). Retry resolve fails, user stays on prompt with error."
-    # initial ctx used only up to the first resolveUsernameAction
-    context:
-      resolver_match: none
-      flight_access: "yes"
-      identifier_type: email
-      domain_match: "yes"
-    events:
-      - submit_username_company      # EmployeeUsernamePromptView → resolveUsernameAction
-      - error                         # resolveUsernameAction → EmployeeUsernamePromptView
+      - submit_password       # TempPasswordView → createPasswordAction
+      - success               # verifyPasswordAction → SetupPasswordView
+      - createPassword        # SetupPasswordView → createPasswordAction
+      - success               # createPasswordAction → LoggedInView
 
   - id: NONE_EID_NDM_SUBMITUSER_THEN_ERROR_NONE_EID_NDM
     description: "Initial | No match (EmployeeID identifier, Domain match No). Retry resolve from EmployeeIDCompanyPicker succeeds."
@@ -379,10 +625,11 @@ tests:
           identifier_type: employeeid
       - submit_password              # TempPasswordView → createPasswordAction
       - success                      # verifyPasswordAction → SetupPasswordView
-      - createPassword               # SetupPasswordView → LoggedInView
+      - createPassword        # SetupPasswordView → createPasswordAction
+      - success               # createPasswordAction → LoggedInView
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC
-    description: "Initial | No match (Flight access, Email identifier, Domain match Yes). Retry resolve fails, user stays on prompt with error."
+    description: "Initial | No match (Flight access, Email identifier, Domain match Yes). User prompted to create an account."
     # initial ctx used only up to the first resolveUsernameAction
     context:
       resolver_match: none
@@ -392,3 +639,32 @@ tests:
     events:
       - passwordEmailLinkSuccess    # PasswordEmailLinkView → sendPasswordEmailLinkAction 
       - createPassword              # SetupPasswordView → LoggedInView
+      - success                     # createPasswordAction → LoggedInView
+
+  # ------------------------------------------------------------#
+  # -------------------- Error States --------------------------#
+  # ------------------------------------------------------------#
+  - id: NONE_FL_E_DMY_SUBMITUSER_THEN_ERROR_NONE_FL_E_DMY
+    description: "Initial | No match (Flight access, Email identifier, Domain match Yes). Retry resolve fails, user stays on prompt with error."
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "yes"
+      identifier_type: email
+      domain_match: "yes"
+    events:
+      - submit_username_company      # EmployeeUsernamePromptView → resolveUsernameAction
+      - error                        # resolveUsernameAction → EmployeeUsernamePromptView
+
+  - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_ERROR
+    description: "Initial | No match (Flight access, Email identifier, Domain match Yes). Retry resolve fails, user stays on prompt with error."
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "no"
+      identifier_type: email
+      domain_match: "yes"
+    events:
+      - passwordEmailLinkSuccess    # PasswordEmailLinkView → sendPasswordEmailLinkAction 
+      - createPassword              # SetupPasswordView → createPasswordAction
+      - failure                     # createPasswordAction → SetupPasswordView

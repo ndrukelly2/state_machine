@@ -61,8 +61,8 @@ transitions:
   # ─── Credential verification (action) ─────────────────────
   verifyTempPasswordAction:
     success:          SetupPasswordView
-    invalid_password: { target: TempPasswordEntryView, error_id: LOGIN_PW_001 }
-    account_locked:   { target: TempPasswordEntryView, error_id: LOGIN_LOCK_002 }
+    invalid_password: { target: TempPasswordEntryView, error_id: TEMP_PW_001 }
+    account_locked:   { target: TempPasswordEntryView, error_id: TEMP_LOCK_002 }
     forgot_password:  forgotPw_subflow
 
   verifyPasswordAction:
@@ -88,18 +88,31 @@ transitions:
 
   logLoginAttemptAction:
     logged: LoggedInView
-
+  
+  # ─── Specific to new account setup emails ─────────────────────────
   sendPasswordEmailLinkAction:
     email_sent: SetupPasswordView
-    error:      { target: PasswordEmailLinkView, error_id: EMAIL_LINK_ERR }
+    error:      { target: PasswordEmailLinkView, error_id: EMAIL_LINK_ERR_1 }
 
+  # ─── Specific to forgot password flow (user can skip) ─────────────────────────
   sendResetEmailAction:
     success: UpdatePasswordView
-    error:      { target: ForgotPasswordEmailLinkView, error_id: EMAIL_LINK_ERR }
+    error:   { target: ForgotPasswordEmailLinkView, error_id: EMAIL_LINK_ERR_2 }
+
+  # ADDED section for createPasswordAction
+  createPasswordAction:
+    success: LoggedInView
+    failure: { target: SetupPasswordView, error_id: CREATE_PW_FAILED }
+
+  # ADDED section for updatePasswordAction
+  updatePasswordAction:
+    success: LoggedInView
+    failure: { target: UpdatePasswordView, error_id: UPDATE_PW_FAILED }
 
   # ─── View transitions (explicit events) ────────────────────
   UsernameEntryView:
     submit_username: resolveUsernameAction
+    # login_with_company_name: EmployeeUsernamePromptView # This can just be hardcoded redirect
 
   PasswordEntryView:
     submit_password: verifyPasswordAction
@@ -109,7 +122,9 @@ transitions:
     submit_password: verifyTempPasswordAction
 
   SSORedirectView:
-    continue: LoggedInView
+    continue:  LoggedInView                        # IdP success
+    failure:   { target: UsernameEntryView, error_id: SSO_FAIL_001 }    # IdP sent error
+    cancelled: { target: UsernameEntryView, error_id: SSO_CANCELLED }   # user closed the window
 
   ForgotPasswordEmailLinkView:
     submit_email: sendResetEmailAction
@@ -118,10 +133,7 @@ transitions:
     passwordEmailLinkSuccess: SetupPasswordView
 
   SetupPasswordView:
-    createPassword: LoggedInView
+    createPassword: createPasswordAction # CHANGED from LoggedInView
 
   UpdatePasswordView:
-    updatePassword: LoggedInView
-
-  # MfaCodeEntryView:
-  #   submit_code: verifyMFACodeAction
+    updatePassword: updatePasswordAction # CHANGED from LoggedInView

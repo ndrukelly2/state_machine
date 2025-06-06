@@ -22,6 +22,8 @@ states:
   initiateSSOAction:             { type: action }
   logLoginAttemptAction:         { type: action }
   sendPasswordEmailLinkAction:   { type: action }
+  createPasswordAction:          { type: action } # ADDED
+  updatePasswordAction:          { type: action } # ADDED
 
   # ─── sub-flows (re-usable chains) ───────────────────────────
   flight_password_first_login_subflow:
@@ -30,7 +32,7 @@ states:
       - TempPasswordEntryView
       - verifyTempPasswordAction
       - SetupPasswordView
-      - LoggedInView
+      - createPasswordAction # CHANGED from LoggedInView
 
   flight_password_returning_subflow:
     type: sub-flow
@@ -52,6 +54,7 @@ states:
     - PasswordEmailLinkView
     - sendPasswordEmailLinkAction
     - SetupPasswordView
+    - createPasswordAction 
     - LoggedInView
 
   forgotPw_subflow:
@@ -60,6 +63,7 @@ states:
       - ForgotPasswordEmailLinkView
       - sendResetEmailAction
       - UpdatePasswordView
+      - updatePasswordAction 
       - LoggedInView
 
   # ─── atomic UI views (each can display errors) ───────────────

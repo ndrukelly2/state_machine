@@ -97,7 +97,10 @@ class StateMachine:
                 nxt = self._next(self.cur, event)
                 if nxt is None:
                     raise RuntimeError(f"No edge for action '{event}' from '{self.cur}'")
-                self.cur, self.pending_error, event = nxt, None, None # pending_error reset
+                #self.cur, self.pending_error, event = nxt, None, None # pending_error reset
+                self.cur = nxt
+                # keep pending_error if _next() just set it
+                event = None
                 continue
 
             # ---------- SUB-FLOW ----------
@@ -171,7 +174,7 @@ if __name__ == "__main__":
                 "no"        # user does not have flight-access
             ],
             "first_login": [
-                "yes",      # this is the user’s first successful login
+                "yes",      # this is the user's first successful login
                 "no"        # user has logged in before
             ],
             "login_method": [
@@ -192,11 +195,7 @@ if __name__ == "__main__":
 
     ctx = {
         "resolver_match": "multiple",
-        "flight_access": "yes",
-        "first_login": "no",
-        "login_method": "password",
         "identifier_type": "email",
-        "domain_match": "yes",
     }
 
     sm = StateMachine(ctx, output_stream=sys.stdout) # Ensure demo uses the new signature
