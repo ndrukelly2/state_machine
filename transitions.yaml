@@ -137,3 +137,4 @@ transitions:
 
   UpdatePasswordView:
     updatePassword: updatePasswordAction # CHANGED from LoggedInView
+    skip: LoggedInView

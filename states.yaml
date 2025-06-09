@@ -67,14 +67,14 @@ states:
       - LoggedInView
 
   # ─── atomic UI views (each can display errors) ───────────────
-  UsernameEntryView:              { type: view, interface: usernameEntryUI,              error_id: null }
-  TempPasswordEntryView:          { type: view, interface: tempPasswordEntryUI,          error_id: null }
-  PasswordEntryView:              { type: view, interface: passwordEntryUI,              error_id: null }
-  SetupPasswordView:              { type: view, interface: setupPasswordUI,              error_id: null }
-  UpdatePasswordView:             { type: view, interface: updatePasswordUI,             error_id: null }
-  PasswordEmailLinkView:          { type: view, interface: passwordEmailLinkUI,          error_id: null }
-  SSORedirectView:                { type: view, interface: SSORedirectUI,                error_id: null }
-  LoggedInView:                   { type: view, interface: loggedInUI,                   error_id: null }
-  ForgotPasswordEmailLinkView:    { type: view, interface: forgotPasswordEmailLinkUI,    error_id: null }
-  EmployeeUsernamePromptView:     { type: view, interface: employeeUsernamePromptUI,     error_id: null }
-  OrganizationPickerView:         { type: view, interface: organizationPickerUI,         error_id: null }
+  UsernameEntryView:              { type: view, interface: usernameEntryUI,              error_id: null, cs_contact: false }
+  TempPasswordEntryView:          { type: view, interface: tempPasswordEntryUI,          error_id: null, cs_contact: true }
+  PasswordEntryView:              { type: view, interface: passwordEntryUI,              error_id: null, cs_contact: false }
+  SetupPasswordView:              { type: view, interface: setupPasswordUI,              error_id: null, cs_contact: false }
+  UpdatePasswordView:             { type: view, interface: updatePasswordUI,             error_id: null, cs_contact: false }
+  PasswordEmailLinkView:          { type: view, interface: passwordEmailLinkUI,          error_id: null, cs_contact: false }
+  SSORedirectView:                { type: view, interface: SSORedirectUI,                error_id: null, cs_contact: false }
+  LoggedInView:                   { type: view, interface: loggedInUI,                   error_id: null, cs_contact: false }
+  ForgotPasswordEmailLinkView:    { type: view, interface: forgotPasswordEmailLinkUI,    error_id: null, cs_contact: false }
+  EmployeeUsernamePromptView:     { type: view, interface: employeeUsernamePromptUI,     error_id: null, cs_contact: true }
+  OrganizationPickerView:         { type: view, interface: organizationPickerUI,         error_id: null, cs_contact: false }

@@ -300,6 +300,21 @@ tests:
       - updatePassword    # UpdatePasswordView → UpdatePasswordAction
       - failure           # UpdatePasswordAction → UpdatePasswordView
 
+  ## ---------- EXACT → flight org • returning password (email) | forgot password | skip ----
+  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_SKIP
+    description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password, skip"
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+    events:
+      - forgot_password   # PasswordEntryView → ForgotPasswordEmailLinkView
+      - submit_email      # ForgotPasswordEmailLinkView → sendResetEmailAction
+      - success           # sendResetEmailAction → UpdatePasswordView
+      - skip              # UpdatePasswordView → LoggedInView
+
   ###############################################################
   # ===  SECTION 2 : resolver_match == multiple               ===
   ###############################################################
