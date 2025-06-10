@@ -26,18 +26,30 @@ class StateMachine:
         self.output_stream = output_stream if output_stream is not None else sys.stdout # ADDED
 
     # ---------- helpers ------------------------------------
-    def _next(self, state: str, key: str):
+    def _next(self, state: str, key: str) -> Tuple[Optional[str], Optional[Dict[str, Any]]]: # MODIFIED return type
         ent = TRANS.get(state, {}).get(key)
+        set_ctx_data = None
+        target_state = None
+
         if isinstance(ent, dict):
             self.pending_error = ent.get("error_id")
-            print(f"[DEBUG] Transition (with error) from '{state}' on '{key}' → target='{ent['target']}', error_id='{self.pending_error}'", file=self.output_stream) # MODIFIED
-            return ent["target"]
+            target_state = ent.get("target")
+            set_ctx_data = ent.get("set_context") # ADDED: Get set_context
+            print(f"[DEBUG] Transition (with error/context) from '{state}' on '{key}' → target='{target_state}', error_id='{self.pending_error}', set_context='{set_ctx_data}'", file=self.output_stream)
         elif ent:
-            print(f"[DEBUG] Transition from '{state}' on '{key}' → '{ent}'", file=self.output_stream) # MODIFIED
-            return ent
+            target_state = ent
+            print(f"[DEBUG] Transition from '{state}' on '{key}' → '{target_state}'", file=self.output_stream)
         else:
-            print(f"[DEBUG] No transition defined from '{state}' on '{key}'", file=self.output_stream) # MODIFIED
-            return None
+            print(f"[DEBUG] No transition defined from '{state}' on '{key}'", file=self.output_stream)
+        
+        return target_state, set_ctx_data # MODIFIED: Return target and set_context data
+
+    def _apply_context_updates(self, context_updates: Optional[Dict[str, Any]]): # ADDED: New helper method
+        if context_updates:
+            print(f"[DEBUG] Applying context updates: {context_updates}", file=self.output_stream)
+            for k, v in context_updates.items():
+                self.ctx[str(k).lower()] = str(v).lower()
+            print(f"[DEBUG] Updated context: {self.ctx}", file=self.output_stream)
 
     def _enter_subflow(self, subflow: str):
         print(f"[DEBUG] Entering sub-flow '{subflow}'", file=self.output_stream) # MODIFIED
@@ -65,41 +77,45 @@ class StateMachine:
         Prints debug info at each step.
         """
         while self.cur:
-            print(f"\n[STATE] '{self.cur}' (type={STATES[self.cur]['type']}) | pending_error={self.pending_error!r} | event={event!r}", file=self.output_stream) # MODIFIED
-            state = STATES[self.cur]
-            stype = state["type"]
+            print(f"\n[STATE] '{self.cur}' (type={STATES[self.cur]['type']}) | ctx={self.ctx} | pending_error={self.pending_error!r} | event={event!r}", file=self.output_stream) # MODIFIED to show context
+            state_config = STATES[self.cur] # Renamed 'state' to 'state_config' to avoid conflict
+            stype = state_config["type"]
 
             # ---------- SWITCH ----------
             if stype == "switch":
-                expr = state["expression"]
+                expr = state_config["expression"]
                 val = self.ctx.get(expr)
-                print(f"[SWITCH] Evaluating '{expr}' → '{val}'", file=self.output_stream) # MODIFIED
-                nxt = self._next(self.cur, val)
+                print(f"[SWITCH] Evaluating '{expr}' → '{val}'", file=self.output_stream) 
+                nxt, context_updates = self._next(self.cur, val) # MODIFIED: Get context_updates
+                self._apply_context_updates(context_updates) # ADDED: Apply context updates
                 if nxt is None:
                     raise RuntimeError(f"No edge for value '{val}' from switch '{self.cur}'")
-                self.cur, self.pending_error = nxt, None # pending_error reset after use or if no error in _next
+                self.cur, self.pending_error = nxt, None 
                 event = None
                 continue
 
             # ---------- ACTION ----------
             if stype == "action":
-                print(f"[ACTION] at '{self.cur}', waiting for event" + ("" if event else " (no event yet)"), file=self.output_stream) # MODIFIED
+                print(f"[ACTION] at '{self.cur}', waiting for event" + ("" if event else " (no event yet)"), file=self.output_stream) 
                 if event is None:
-                    return {"state_id": self.cur, "action": True}
+                    # For actions, we might want to include cs_contact if defined
+                    action_payload = {"state_id": self.cur, "action": True}
+                    if state_config.get("cs_contact"):
+                        action_payload["cs_contact"] = True
+                    return action_payload
+
 
                 if self.cur == "resolveUsernameAction" and isinstance(event, dict):
                     ev = event["type"]
                     new_ctx = event.get("context", {})
-                    for k,v in new_ctx.items():
-                        self.ctx[k] = str(v).lower()
+                    self._apply_context_updates(new_ctx) # Use helper to apply context
                     event = ev
 
-                nxt = self._next(self.cur, event)
+                nxt, context_updates = self._next(self.cur, event) # MODIFIED: Get context_updates
+                self._apply_context_updates(context_updates) # ADDED: Apply context updates
                 if nxt is None:
                     raise RuntimeError(f"No edge for action '{event}' from '{self.cur}'")
-                #self.cur, self.pending_error, event = nxt, None, None # pending_error reset
                 self.cur = nxt
-                # keep pending_error if _next() just set it
                 event = None
                 continue
 
@@ -111,20 +127,25 @@ class StateMachine:
 
             # ---------- VIEW ----------
             if stype == "view":
-                iface = state["interface"]
-                print(f"[VIEW] Rendering interface '{iface}'", file=self.output_stream) # MODIFIED
+                iface = state_config["interface"]
+                print(f"[VIEW] Rendering interface '{iface}'", file=self.output_stream) 
                 payload = {"state_id": self.cur, "interface": iface}
                 if self.pending_error:
                     payload["error_id"] = self.pending_error
-                    print(f"[VIEW] Emitting error_id='{self.pending_error}'", file=self.output_stream) # MODIFIED
-                    self.pending_error = None # Clear error after emitting
+                    print(f"[VIEW] Emitting error_id='{self.pending_error}'", file=self.output_stream) 
+                    self.pending_error = None 
+
+                if state_config.get("cs_contact"): # ADDED: Check for cs_contact in view
+                    payload["cs_contact"] = True
+                    print(f"[VIEW] Emitting cs_contact=True for '{self.cur}'", file=self.output_stream)
 
                 if event is None:
-                    print(f"[VIEW] Pausing for user event on '{self.cur}'", file=self.output_stream) # MODIFIED
+                    print(f"[VIEW] Pausing for user event on '{self.cur}'", file=self.output_stream) 
                     return payload
 
-                print(f"[VIEW] Consuming user event '{event}' on '{self.cur}'", file=self.output_stream) # MODIFIED
-                nxt = self._next(self.cur, event)
+                print(f"[VIEW] Consuming user event '{event}' on '{self.cur}'", file=self.output_stream) 
+                nxt, context_updates = self._next(self.cur, event) # MODIFIED: Get context_updates
+                self._apply_context_updates(context_updates) # ADDED: Apply context updates
                 event = None
                 if nxt:
                     self.cur = nxt
@@ -190,8 +211,40 @@ if __name__ == "__main__":
                 "no"        # submitted email's domain does not match
             ]
         }
-    
-    '''
+
+        ------------------------------------------------------------------------------------
+        View States and Their Possible Events (based on transitions.yaml):
+        ------------------------------------------------------------------------------------
+        - UsernameEntryView:
+            submitUsername
+        - TempPasswordEntryView:
+            submitPassword
+        - PasswordEntryView:
+            submitPassword
+            forgotPassword [still need to make this conditional on an email in our system]
+        - SetupPasswordView:
+            processToken
+            createPassword
+        - UpdatePasswordView:
+            processToken
+            updatePassword
+            skip
+        - SSORedirectView:
+            continue
+            failure
+            cancelled
+        - LoggedInView:
+            (No outgoing user-driven events defined) [need to add a email collection view here in cases where employeeID is used    ]
+        - PasswordEmailLinkView:
+            passwordEmailLinkSuccess
+            resendEmail
+        - ForgotPasswordEmailLinkView:
+            forgotPasswordEmailLinkSuccess
+            resendEmail
+        - OrganizationPickerView:
+            organizationSelected
+        ------------------------------------------------------------------------------------
+        '''
 
     ctx = {
         "resolver_match": "multiple",

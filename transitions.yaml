@@ -2,7 +2,10 @@ transitions:
   # ─── initial resolve split ─────────────────────────────────
   resolver_branch:
     exact:    flight_access_switch
-    multiple: OrganizationPickerView
+    multiple: 
+      target: OrganizationPickerView
+      set_context: 
+        show_username_on_picker: true # This flag will be set in the context
     none:     username_type_switch
 
   # ─── EXACT branch (account exists) ────────────────────────
@@ -29,7 +32,7 @@ transitions:
     #sso:      flight_sso_subflow
     password: non_flight_first_login_switch
 
-  
+
   # ─── NON-FLIGHT password  →  first-login? -------------------
   non_flight_first_login_switch:
     "yes":  non_flight_account_creation_subflow  # account-creation flow
@@ -38,48 +41,54 @@ transitions:
 
   # ─── MULTIPLE branch (user picks an org) ──────────────────
   OrganizationPickerView:
-    organization_selected: resolveUsernameAction
+    organizationSelected: resolveUsernameAction
     #continue: organization_picker_result_switch
 
   # ─── NONE branch (help the user) ──────────────────────────
   username_type_switch:
     email:      domain_flight_access_switch
-    employeeid: EmployeeUsernamePromptView #EmployeeIDCompanyPickerView
+    employeeid:
+      target: OrganizationPickerView
+      set_context:
+        show_username_on_picker: true
 
   domain_flight_access_switch:
-    "yes": flight_access_after_domain_switch   # ← run one more test
+    "yes": flight_access_after_domain_switch
     "no":  non_flight_account_creation_subflow
 
   flight_access_after_domain_switch:
-    "yes": EmployeeUsernamePromptView          # flight org → tips
+    "yes":
+      target: OrganizationPickerView
+      set_context:
+        show_username_on_picker: true
     "no":  non_flight_account_creation_subflow # non-flight → create account
-
-  # ─── employeeUsernamePromptView now restarts resolve on submit_username
-  EmployeeUsernamePromptView:
-    submit_username_company:    resolveUsernameAction
 
   # ─── Credential verification (action) ─────────────────────
   verifyTempPasswordAction:
     success:          SetupPasswordView
-    invalid_password: { target: TempPasswordEntryView, error_id: TEMP_PW_001 }
-    account_locked:   { target: TempPasswordEntryView, error_id: TEMP_LOCK_002 }
-    forgot_password:  forgotPw_subflow
+    invalidPassword: { target: TempPasswordEntryView, error_id: TEMP_PW_001 }
+    accountLocked:   { target: TempPasswordEntryView, error_id: TEMP_LOCK_002 }
+    forgotPassword:  forgotPw_subflow
 
   verifyPasswordAction:
     success:          LoggedInView
-    invalid_password: { target: PasswordEntryView, error_id: LOGIN_PW_001 }
-    account_locked:   { target: PasswordEntryView, error_id: LOGIN_LOCK_002 }
-    forgot_password:  forgotPw_subflow
+    invalidPassword: { target: PasswordEntryView, error_id: LOGIN_PW_001 }
+    accountLocked:   { target: PasswordEntryView, error_id: LOGIN_LOCK_002 }
+    forgotPassword:  forgotPw_subflow
 
   resolveUsernameAction:
     exact:    resolver_branch
-    multiple: resolver_branch
-    # first‐time “none” still just shows the prompt (no error)
+    multiple: resolver_branch # This already targets OrganizationPickerView correctly
+    # first‐time "none" still just shows the prompt (no error)
     none:
-      target: EmployeeUsernamePromptView
+      target: OrganizationPickerView
+      set_context:
+        show_username_on_picker: true
     # on a retry failure, stay on the prompt with an error code
     error:
-      target: EmployeeUsernamePromptView
+      target: OrganizationPickerView
+      set_context:
+        show_username_on_picker: true
       error_id: RESOLVE_NO_MATCH_001
 
   initiateSSOAction:
@@ -91,50 +100,97 @@ transitions:
   
   # ─── Specific to new account setup emails ─────────────────────────
   sendPasswordEmailLinkAction:
-    email_sent: SetupPasswordView
-    error:      { target: PasswordEmailLinkView, error_id: EMAIL_LINK_ERR_1 }
+    success: SetupPasswordView
+    error: { target: PasswordEmailLinkView, error_id: EMAIL_LINK_ERR_1 }
 
   # ─── Specific to forgot password flow (user can skip) ─────────────────────────
   sendResetEmailAction:
-    success: UpdatePasswordView
-    error:   { target: ForgotPasswordEmailLinkView, error_id: EMAIL_LINK_ERR_2 }
+    success:
+      target: UpdatePasswordView
+      set_context:
+        prompt_check_email: true # Flag for UI to show "check email" message
+        token_is_valid: false    # Explicitly set/reset token status
+    error: { target: ForgotPasswordEmailLinkView, error_id: EMAIL_LINK_ERR_2 }
 
-  # ADDED section for createPasswordAction
+  # Action to verify the password reset token from the email link
+  resolvePasswordResetTokenAction:
+    valid:
+      target: UpdatePasswordView
+      set_context:
+        token_is_valid: true
+        prompt_check_email: false # Clear the "check email" prompt
+    invalid:
+      target: UpdatePasswordView
+      set_context:
+        token_is_valid: false
+        prompt_check_email: false
+      error_id: INVALID_RESET_TOKEN
+    expired:
+      target: UpdatePasswordView
+      set_context:
+        token_is_valid: false
+        prompt_check_email: false
+      error_id: EXPIRED_RESET_TOKEN
+
+  # Action to verify the password setup token from the email link
+  resolvePasswordSetupTokenAction:
+    valid:
+      target: SetupPasswordView
+      set_context:
+        token_is_valid: true
+        prompt_check_email: false # Clear the "check email" prompt
+    invalid:
+      target: SetupPasswordView
+      set_context:
+        token_is_valid: false
+        prompt_check_email: false
+      error_id: INVALID_SETUP_TOKEN
+    expired:
+      target: SetupPasswordView
+      set_context:
+        token_is_valid: false
+        prompt_check_email: false
+      error_id: EXPIRED_SETUP_TOKEN
+
+  # Section for createPasswordAction
   createPasswordAction:
     success: LoggedInView
     failure: { target: SetupPasswordView, error_id: CREATE_PW_FAILED }
 
-  # ADDED section for updatePasswordAction
+  # Section for updatePasswordAction
   updatePasswordAction:
     success: LoggedInView
     failure: { target: UpdatePasswordView, error_id: UPDATE_PW_FAILED }
 
   # ─── View transitions (explicit events) ────────────────────
   UsernameEntryView:
-    submit_username: resolveUsernameAction
-    # login_with_company_name: EmployeeUsernamePromptView # This can just be hardcoded redirect
+    submitUsername: resolveUsernameAction
 
   PasswordEntryView:
-    submit_password: verifyPasswordAction
-    forgot_password: forgotPw_subflow
+    submitPassword: verifyPasswordAction
+    forgotPassword: forgotPw_subflow
 
   TempPasswordEntryView:
-    submit_password: verifyTempPasswordAction
+    submitPassword: verifyTempPasswordAction
 
   SSORedirectView:
-    continue:  LoggedInView                        # IdP success
+    continue:  LoggedInView                                             # IdP success
     failure:   { target: UsernameEntryView, error_id: SSO_FAIL_001 }    # IdP sent error
     cancelled: { target: UsernameEntryView, error_id: SSO_CANCELLED }   # user closed the window
 
   ForgotPasswordEmailLinkView:
-    submit_email: sendResetEmailAction
+    forgotPasswordEmailLinkSuccess: UpdatePasswordView
+    resendEmail: sendResetEmailAction 
 
   PasswordEmailLinkView:
     passwordEmailLinkSuccess: SetupPasswordView
+    resendEmail: sendPasswordEmailLinkAction 
 
   SetupPasswordView:
-    createPassword: createPasswordAction # CHANGED from LoggedInView
+    processToken: resolvePasswordSetupTokenAction # Frontend triggers this if token in URL
+    createPassword: createPasswordAction
 
   UpdatePasswordView:
-    updatePassword: updatePasswordAction # CHANGED from LoggedInView
+    processToken: resolvePasswordResetTokenAction # Frontend triggers this if token in URL
+    updatePassword: updatePasswordAction
     skip: LoggedInView

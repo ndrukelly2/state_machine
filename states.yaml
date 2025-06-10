@@ -14,16 +14,17 @@ states:
 
 
   # ─── action nodes ──────────────────────────────────────────
-  resolveUsernameAction:         { type: action }
-  verifyTempPasswordAction:      { type: action }
-  verifyPasswordAction:          { type: action }
-  sendResetEmailAction:          { type: action }
-  fetchOrganizationListAction:   { type: action }
-  initiateSSOAction:             { type: action }
-  logLoginAttemptAction:         { type: action }
-  sendPasswordEmailLinkAction:   { type: action }
-  createPasswordAction:          { type: action } # ADDED
-  updatePasswordAction:          { type: action } # ADDED
+  resolveUsernameAction:           { type: action }
+  verifyTempPasswordAction:        { type: action }
+  verifyPasswordAction:            { type: action }
+  sendResetEmailAction:            { type: action }
+  initiateSSOAction:               { type: action }
+  logLoginAttemptAction:           { type: action }
+  sendPasswordEmailLinkAction:     { type: action }
+  createPasswordAction:            { type: action }
+  updatePasswordAction:            { type: action }
+  resolvePasswordResetTokenAction: { type: action } # Ensure this exists
+  resolvePasswordSetupTokenAction: { type: action } # Ensure this exists
 
   # ─── sub-flows (re-usable chains) ───────────────────────────
   flight_password_first_login_subflow:
@@ -32,7 +33,7 @@ states:
       - TempPasswordEntryView
       - verifyTempPasswordAction
       - SetupPasswordView
-      - createPasswordAction # CHANGED from LoggedInView
+      - createPasswordAction
 
   flight_password_returning_subflow:
     type: sub-flow
@@ -61,9 +62,11 @@ states:
     type: sub-flow
     flow:
       - ForgotPasswordEmailLinkView
-      - sendResetEmailAction
+      - sendResetEmailAction          # On success, transitions to UpdatePasswordView
+      # UpdatePasswordView will initially tell the user to check their email.
+      # When the user returns with a token, UpdatePasswordView's UI will trigger token processing.
       - UpdatePasswordView
-      - updatePasswordAction 
+      - updatePasswordAction          # After successful token validation and password update
       - LoggedInView
 
   # ─── atomic UI views (each can display errors) ───────────────
@@ -76,5 +79,7 @@ states:
   SSORedirectView:                { type: view, interface: SSORedirectUI,                error_id: null, cs_contact: false }
   LoggedInView:                   { type: view, interface: loggedInUI,                   error_id: null, cs_contact: false }
   ForgotPasswordEmailLinkView:    { type: view, interface: forgotPasswordEmailLinkUI,    error_id: null, cs_contact: false }
-  EmployeeUsernamePromptView:     { type: view, interface: employeeUsernamePromptUI,     error_id: null, cs_contact: true }
   OrganizationPickerView:         { type: view, interface: organizationPickerUI,         error_id: null, cs_contact: false }
+
+# We need a resend email action on the password reset interface
+# EmployeeUsernamePromptView: { type: view, interface: employeeUsernamePromptUI, error_id: null, cs_contact: true }
