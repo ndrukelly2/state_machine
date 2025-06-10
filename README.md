@@ -210,10 +210,7 @@ export interface SSOCancelledPayload extends BaseEventPayload {
 ```
 
 #### Organization Picker Events [basically another resolve call from here but with company info added]
-#### Note: When a employeeID is submitted as the identifier we will want to math with a "LIKE" db call.
-####    Our goal here is to let users login with their employeeID even in cases when they were told to put
-####    special characters around it. For example both "AA12345" and "12345" would work as the identifier
-####    because we are also passing companyCode (eg AA). This is a big CS call driver.
+##### Note: When a employeeID is submitted as the identifier we will want to math with a "LIKE" db call. Our goal here is to let users login with their employeeID even in cases when they were told to put special characters around it. For example both "AA12345" and "12345" would work as the identifier because we are also passing companyCode (eg AA). This is a big CS call driver.
 ```typescript
 export interface OrganizationSelectedPayload extends BaseEventPayload {
   event: "organizationSelected";
@@ -296,7 +293,7 @@ interface PasswordEntryViewPayload {
 ```
 
 #### SetupPasswordView (`setupPasswordUI`)
-#### Password setup email links will be direct to this interface. When clicking on the email link they will be redirect here with and then passed the token from the tokenized link in the email. The server will then validate the token, and if valid, will be able to create their new password.
+##### Password setup email links will be directed to this interface. When clicking on the email link they will be redirect here with and then passed the token from the tokenized link in the email. The server will then validate the token, and if valid, will be able to create their new password.
 ```typescript
 interface SetupPasswordViewPayload {
   token: string; 
@@ -314,7 +311,7 @@ interface SetupPasswordViewPayload {
 ```
 
 #### UpdatePasswordView (`updatePasswordUI`)
-#### Password update email links will be direct to this interface. When clicking on the email link they will be redirect here with and then passed the token from the tokenized link in the email. The server will then validate the token, and if valid, will be able to create their new password.
+##### Password update email links will be directed to this interface. When clicking on the email link they will be redirect here with and then passed the token from the tokenized link in the email. The server will then validate the token, and if valid, will be able to create their new password.
 ```typescript
 interface UpdatePasswordViewPayload {
   token: string;
@@ -347,7 +344,7 @@ interface PasswordEmailLinkViewPayload {
 ```
 
 #### SSORedirectView (`ssoRedirectUI`)
-### Note: we do not actually render this interface. This is just to trigger the redirect to users SSO endpoint. 
+##### Note: we do not actually render this interface. This is just to trigger the redirect to users SSO endpoint. 
 ```typescript
 interface SSORedirectViewPayload {
   token: string;
@@ -392,7 +389,7 @@ interface ForgotPasswordEmailLinkViewPayload {
 ```
 
 #### OrganizationPickerView (`organizationPickerUI`)
-#### This essentially fires the resolve call again but with the company code + identfier combined. If a user picks a company from the drop down that is SSO by defaul, we want to launch their SSO redirect and not require the username at all (this is how it works today).
+##### This essentially fires the resolve call again but with the company code + identfier combined. If a user picks a company from the drop down that is SSO by defaul, we want to launch their SSO redirect and not require the username at all (this is how it works today).
 ```typescript
 interface OrganizationPickerViewPayload {
   state_id: "OrganizationPickerView";
