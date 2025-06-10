@@ -70,16 +70,118 @@ states:
       - LoggedInView
 
   # ─── atomic UI views (each can display errors) ───────────────
-  UsernameEntryView:              { type: view, interface: usernameEntryUI,              error_id: null, cs_contact: false }
-  TempPasswordEntryView:          { type: view, interface: tempPasswordEntryUI,          error_id: null, cs_contact: true }
-  PasswordEntryView:              { type: view, interface: passwordEntryUI,              error_id: null, cs_contact: false }
-  SetupPasswordView:              { type: view, interface: setupPasswordUI,              error_id: null, cs_contact: false }
-  UpdatePasswordView:             { type: view, interface: updatePasswordUI,             error_id: null, cs_contact: false }
-  PasswordEmailLinkView:          { type: view, interface: passwordEmailLinkUI,          error_id: null, cs_contact: false }
-  SSORedirectView:                { type: view, interface: SSORedirectUI,                error_id: null, cs_contact: false }
-  LoggedInView:                   { type: view, interface: loggedInUI,                   error_id: null, cs_contact: false }
-  ForgotPasswordEmailLinkView:    { type: view, interface: forgotPasswordEmailLinkUI,    error_id: null, cs_contact: false }
-  OrganizationPickerView:         { type: view, interface: organizationPickerUI,         error_id: null, cs_contact: false }
+  UsernameEntryView:
+    type: view
+    interface: usernameEntryUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      #- username # Example: if you want to pre-fill username if available in context
+      #- last_login_attempt_status # Example: if you want to show some status
 
-# We need a resend email action on the password reset interface
-# EmployeeUsernamePromptView: { type: view, interface: employeeUsernamePromptUI, error_id: null, cs_contact: true }
+  TempPasswordEntryView:
+    type: view
+    interface: tempPasswordEntryUI
+    error_id: null
+    cs_contact: true
+    include_context_keys:
+      - identifier
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the pior state before going to email.
+
+  PasswordEntryView:
+    type: view
+    interface: passwordEntryUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - identifier
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the pior state before going to email.
+
+  SetupPasswordView:
+    type: view
+    interface: setupPasswordUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - identifier
+      - email # This could be null if not available.
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the pior state before going to email.
+
+  UpdatePasswordView:
+    type: view
+    interface: updatePasswordUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - identifier
+      - email # This could be null if not available.
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the pior state before going to email.
+
+  PasswordEmailLinkView:
+    type: view
+    interface: passwordEmailLinkUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - identifier
+      - email # This could be null if not available.
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the pior state before going to email.
+  
+  SSORedirectView:
+    type: view
+    interface: SSORedirectUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - sso_url
+      - token # This represents the prior state before going to SSO.
+      - identifier # This is the user identifier for the SSO flow.
+      - email # if we have it
+      - company_code  # EG Airline code
+      - company_display_name
+  
+  LoggedInView:
+    type: view
+    interface: loggedInUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - username
+      - display_name
+      - access_token # whatever is passed today to get all user context
+      #- ?
+
+  ForgotPasswordEmailLinkView:
+    type: view
+    interface: forgotPasswordEmailLinkUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - identifier
+      - email # This could be null if not available.
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the pior state before going to email.
+  
+  OrganizationPickerView:
+    type: view
+    interface: organizationPickerUI
+    error_id: null
+    include_context_keys:
+      - company_list # This is a list of companies available 
+      - identifier # This is the user identifier for the picker
+      - email # This could be null if not available.
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the prior state before going to organization picker.
+
