@@ -389,7 +389,7 @@ interface ForgotPasswordEmailLinkViewPayload {
 ```
 
 #### OrganizationPickerView (`organizationPickerUI`)
-##### This essentially fires the resolve call again but with the company code + identfier combined. If a user picks a company from the drop down that is SSO by defaul, we want to launch their SSO redirect and not require the username at all (this is how it works today).
+##### This essentially fires the resolve() call again but with the company code + identfier combined. If a user picks a company from the drop down that is SSO by default, we want to launch their SSO redirect and not require the username at all (this is how it works today).
 ```typescript
 interface OrganizationPickerViewPayload {
   state_id: "OrganizationPickerView";
