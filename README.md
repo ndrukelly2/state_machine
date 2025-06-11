@@ -216,7 +216,6 @@ export interface OrganizationSelectedPayload extends BaseEventPayload {
   event: "organizationSelected";
   data: {
     companyCode: string; // Selected organization code
-    companyDisplayName: string; // Selected organization display name
     identifier?: string; // Updated user identifier if changed. There are cases where this might not be passed. An example is when a user picks their company from the dropdown and all those company users are SSO by defaul....we will automatically trigger the SSO redirect. This is how it works today.
   };
 }
