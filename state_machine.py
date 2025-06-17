@@ -17,10 +17,10 @@ STATES = yaml.safe_load((BASE / "states.yaml").read_text(encoding="utf-8"))["sta
 
 
 class StateMachine:
-    def __init__(self, ctx: Dict[str, Any], output_stream=None, initial_state: Optional[str] = None): # MODIFIED
+    def __init__(self, ctx: Dict[str, Any], output_stream=None): # MODIFIED
         # normalize context values to lowercase strings
         self.ctx = {k: str(v).lower() for k, v in ctx.items()}
-        self.cur: Optional[str] = initial_state if initial_state else "resolver_branch" # MODIFIED
+        self.cur: Optional[str] = "resolver_branch"
         self.stack: List[Tuple[str, List[str]]] = []       # sub-flow stack
         self.pending_error: Optional[str] = None           # carries error_id
         self.output_stream = output_stream if output_stream is not None else sys.stdout # ADDED
@@ -221,7 +221,7 @@ if __name__ == "__main__":
             submitPassword
         - PasswordEntryView:
             submitPassword
-            forgotPassword [still need to make this conditional on an email in our system]
+            forgotPassword
         - SetupPasswordView:
             processToken
             createPassword
@@ -234,12 +234,10 @@ if __name__ == "__main__":
             failure
             cancelled
         - LoggedInView:
-            (No outgoing user-driven events defined) [need to add a email collection view here in cases where employeeID is used    ]
+            (No outgoing user-driven events defined in transitions.yaml)
         - PasswordEmailLinkView:
-            passwordEmailLinkSuccess
             resendEmail
         - ForgotPasswordEmailLinkView:
-            forgotPasswordEmailLinkSuccess
             resendEmail
         - OrganizationPickerView:
             organizationSelected
@@ -255,18 +253,5 @@ if __name__ == "__main__":
 
     # Wind your way through the state machine by calling step() with events
     print(sm.step(), file=sys.stdout) # Direct demo prints to actual stdout
-    # Example of starting at a specific state for demo:
-    # ctx_specific_start = {
-    #     "resolver_match": "exact",
-    #     "flight_access": "yes",
-    #     "first_login": "no",
-    #     "login_method": "password",
-    #     "identifier_type": "email",
-    # }
-    # sm_specific_start = StateMachine(ctx_specific_start, initial_state="UpdatePasswordView", output_stream=sys.stdout)
-    # print(sm_specific_start.step("processToken"), file=sys.stdout)
-    # print(sm_specific_start.step("valid"), file=sys.stdout)
-
-    print(sm.step("organizationSelected"), file=sys.stdout) # MODIFIED for demo to make sense with multiple
-    # print(sm.step("submit_password"), file=sys.stdout) # Original demo line
-    # print(sm.step("success"), file=sys.stdout) # Original demo line
+    print(sm.step("submit_password"), file=sys.stdout)
+    print(sm.step("success"), file=sys.stdout)
