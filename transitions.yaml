@@ -32,16 +32,16 @@ transitions:
     #sso:      flight_sso_subflow
     password: non_flight_first_login_switch
 
-
   # ─── NON-FLIGHT password  →  first-login? -------------------
   non_flight_first_login_switch:
     "yes":  non_flight_account_creation_subflow  # account-creation flow
     "no":   flight_password_returning_subflow    # normal returning pwd flow
 
-
   # ─── MULTIPLE branch (user picks an org) ──────────────────
   OrganizationPickerView:
-    organizationSelected: resolveUsernameAction
+    organizationSelected:
+      target: resolveUsernameAction
+      set_context: { came_from_org_picker: true } # Set the flag here
     #continue: organization_picker_result_switch
 
   # ─── NONE branch (help the user) ──────────────────────────
@@ -54,7 +54,19 @@ transitions:
 
   domain_flight_access_switch:
     "yes": flight_access_after_domain_switch
-    "no":  non_flight_account_creation_subflow
+    "no":  check_came_from_org_picker_switch # Modified: go to the new switch
+
+  check_came_from_org_picker_switch: # New switch transitions
+    "yes":
+      target: OrganizationPickerView
+      error_id: DOMAIN_NOT_RECOGNIZED_POST_PICK # Specific error for this case
+      set_context:
+        came_from_org_picker: false # Clear the flag
+        show_username_on_picker: true # Ensure picker UI is correct
+    "no": # Default or not set (or explicitly "false")
+      target: UsernameEntryView
+      error_id: DOMAIN_NOT_RECOGNIZED # Original error
+      set_context: { came_from_org_picker: false } # Ensure flag is cleared
 
   flight_access_after_domain_switch:
     "yes":
@@ -100,17 +112,13 @@ transitions:
   
   # ─── Specific to new account setup emails ─────────────────────────
   sendPasswordEmailLinkAction:
-    success: SetupPasswordView
-    error: { target: PasswordEmailLinkView, error_id: EMAIL_LINK_ERR_1 }
+    success: PasswordEmailLinkView # Transition to the view confirming email was sent
+    error: { target: PasswordEmailLinkView, error_id: EMAIL_LINK_ERR_1 } # Or another appropriate error view
 
-  # ─── Specific to forgot password flow (user can skip) ─────────────────────────
+  # ─── Specific to forgot password flow ─────────────────────────
   sendResetEmailAction:
-    success:
-      target: UpdatePasswordView
-      set_context:
-        prompt_check_email: true # Flag for UI to show "check email" message
-        token_is_valid: false    # Explicitly set/reset token status
-    error: { target: ForgotPasswordEmailLinkView, error_id: EMAIL_LINK_ERR_2 }
+    success: ForgotPasswordEmailLinkView # Transition to the view confirming email was sent
+    error: { target: ForgotPasswordEmailLinkView, error_id: EMAIL_LINK_ERR_2, set_context: { prompt_check_email: false } }
 
   # Action to verify the password reset token from the email link
   resolvePasswordResetTokenAction:
@@ -118,15 +126,15 @@ transitions:
       target: UpdatePasswordView
       set_context:
         token_is_valid: true
-        prompt_check_email: false # Clear the "check email" prompt
+        prompt_check_email: false
     invalid:
-      target: UpdatePasswordView
+      target: UpdatePasswordView # Or could be ForgotPasswordEmailLinkView with error
       set_context:
         token_is_valid: false
         prompt_check_email: false
       error_id: INVALID_RESET_TOKEN
     expired:
-      target: UpdatePasswordView
+      target: UpdatePasswordView # Or could be ForgotPasswordEmailLinkView with error
       set_context:
         token_is_valid: false
         prompt_check_email: false
@@ -138,15 +146,15 @@ transitions:
       target: SetupPasswordView
       set_context:
         token_is_valid: true
-        prompt_check_email: false # Clear the "check email" prompt
+        prompt_check_email: false
     invalid:
-      target: SetupPasswordView
+      target: SetupPasswordView # Or could be PasswordEmailLinkView with error
       set_context:
         token_is_valid: false
         prompt_check_email: false
       error_id: INVALID_SETUP_TOKEN
     expired:
-      target: SetupPasswordView
+      target: SetupPasswordView # Or could be PasswordEmailLinkView with error
       set_context:
         token_is_valid: false
         prompt_check_email: false
@@ -179,12 +187,13 @@ transitions:
     cancelled: { target: UsernameEntryView, error_id: SSO_CANCELLED }   # user closed the window
 
   ForgotPasswordEmailLinkView:
-    forgotPasswordEmailLinkSuccess: UpdatePasswordView
-    resendEmail: sendResetEmailAction 
+    resendEmail: sendResetEmailAction # Only allows resending the email
+    # No other transitions from here; user action is external (clicking email link)
 
   PasswordEmailLinkView:
-    passwordEmailLinkSuccess: SetupPasswordView
-    resendEmail: sendPasswordEmailLinkAction 
+    resendEmail: sendPasswordEmailLinkAction # Only allows resending the email
+    # No 'passwordEmailLinkSuccess' event leading to SetupPasswordView anymore.
+    # User action is external (clicking email link)
 
   SetupPasswordView:
     processToken: resolvePasswordSetupTokenAction # Frontend triggers this if token in URL

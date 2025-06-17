@@ -6,6 +6,7 @@ tests:
   # ---------- EXACT → flight org • first-login pwd ----
   - id: EXACT_FL_FIRST_PASS_E
     description: "Initial | Exact match. Context |Flight access, First login, Password auth, Email identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -13,7 +14,7 @@ tests:
       login_method: password
       identifier_type: email
     events:
-      - submitPassword     # TempPasswordView → createPasswordAction
+      - submitPassword      # TempPasswordView → createPasswordAction
       - success             # verifyPasswordAction → SetupPasswordView  
       - createPassword      # SetupPasswordView → createPasswordAction
       - success             # createPasswordAction → LoggedInView
@@ -21,6 +22,7 @@ tests:
   # ---------- EXACT → flight org • first-login sso ----
   - id: EXACT_FL_FIRST_SSO_E
     description: "Initial | Exact match. Context |Flight access, First login, SSO auth, Email identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -33,6 +35,7 @@ tests:
   # ---------- EXACT → flight org • returning pwd ----
   - id: EXACT_FL_RET_PASS_E
     description: "Initial | Exact match. Context |Flight access, Returning user, Password auth, Email identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -46,6 +49,7 @@ tests:
   # ---------- EXACT → non-flight org • returning pwd ----
   - id: EXACT_NFL_RET_PASS_E
     description: "Initial | Exact match. Context |Non-flight access, Returning user, Password auth, Email identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "no"
@@ -59,6 +63,7 @@ tests:
   # ---------- EXACT → flight org • returning sso ----
   - id: EXACT_FL_RET_SSO_E
     description: "Initial | Exact match. Context |Flight access, Returning user, SSO auth, Email identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -71,6 +76,7 @@ tests:
   # ---------- EXACT → flight org • first-login sso (EmployeeID) ----
   - id: EXACT_FL_FIRST_SSO_ID
     description: "Initial | Exact match. Context |Flight access, First login, SSO auth, EmployeeID identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -83,6 +89,7 @@ tests:
   # ---------- EXACT → flight org • returning pwd (EmployeeID) ----
   - id: EXACT_FL_RET_PASS_ID
     description: "Initial | Exact match. Context |Flight access, Returning user, Password auth, EmployeeID identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -96,6 +103,7 @@ tests:
   # ---------- EXACT → flight org • first-login pwd (EmployeeID) ----
   - id: EXACT_FL_FIRST_PASS_ID
     description: "Initial | Exact match. Context |Flight access, First login, Password auth, EmployeeID identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -111,6 +119,7 @@ tests:
   # ---------- EXACT → flight org • returning sso (EmployeeID) ----
   - id: EXACT_FL_RET_SSO_ID
     description: "Initial | Exact match. Context |Flight access, Returning user, SSO auth, EmployeeID identifier."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -123,6 +132,7 @@ tests:
   # ---------- EXACT → flight org • returning password (email) | forgot password ----
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW
     description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password"
+    initial_state: resolver_branch
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -131,11 +141,26 @@ tests:
       identifier_type: email
     events:
       - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
-      - forgotPasswordEmailLinkSuccess      # ForgotPasswordEmailLinkView → UpdatePasswordView
-      - processToken                        # UpdatePasswordView (frontend detects token from URL) → resolvePasswordResetTokenAction
-      - valid                               # resolvePasswordResetTokenAction → UpdatePasswordView (UI shows password fields, token is valid)
-      - updatePassword                      # UpdatePasswordView → UpdatePasswordAction
-      - success                             # UpdatePasswordAction → LoggedInView
+      - success
+
+  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_TOKEN_LANDING
+    description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password, token landing"
+    initial_state: UpdatePasswordView
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+    events:
+      # Event 1: Frontend detects token, state machine is in UpdatePasswordView, processToken is dispatched
+      - processToken        # UpdatePasswordView → resolvePasswordResetTokenAction
+      # Event 2: Token validation is successful
+      - valid               # resolvePasswordResetTokenAction → UpdatePasswordView (context: token_is_valid=true)
+      # Event 3: User submits new password
+      - updatePassword      # UpdatePasswordView → updatePasswordAction
+      # Event 4: Password update is successful
+      - success             # updatePasswordAction → LoggedInView 
 
  # # # ---------- EXACT → flight org • returning password (email) | forgot password ----
  # # - id: EXACT_FL_RET_PASS_E_FORGOT_PW_EMPLOYEEID
@@ -161,6 +186,7 @@ tests:
   # ---------- EXACT → flight org • first-login pwd [Error] ----
   - id: EXACT_FL_FIRST_PASS_E_ERROR
     description: "Initial | Exact match. Context |Flight access, First login, Password auth, Email identifier [Error]."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -168,12 +194,13 @@ tests:
       login_method: password
       identifier_type: email
     events:
-      - submitPassword      # TempPasswordView → createPasswordAction
+      - submitPassword     # TempPasswordView → createPasswordAction
       - invalidPassword    # verifyPasswordAction → SetupPasswordView  
 
   # ---------- EXACT → flight org • first-login pwd [Error] ----
   - id: EXACT_FL_PASS_E_ERROR_ACCOUNT_LOCKED
     description: "Initial | Exact match. Context |Flight access, Password auth, Email identifier [Error, Account Locked]."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -187,6 +214,7 @@ tests:
   # ---------- EXACT → flight org • first-login sso [Error] ----
   - id: EXACT_FL_FIRST_SSO_E_ERROR
     description: "Initial | Exact match. Context |Flight access, First login, SSO auth, Email identifier [Error]."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -200,6 +228,7 @@ tests:
   # ---------- EXACT → flight org • returning pwd [Error] ----
   - id: EXACT_FL_RET_PASS_E_ERROR
     description: "Initial | Exact match. Context |Flight access, Returning user, Password auth, Email identifier [Error]"
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -213,6 +242,7 @@ tests:
   # ---------- EXACT → non-flight org • returning pwd [Error] ----
   - id: EXACT_NFL_RET_PASS_E_ERROR
     description: "Initial | Exact match. Context |Non-flight access, Returning user, Password auth, Email identifier [Error]"
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "no"
@@ -226,6 +256,7 @@ tests:
   # ---------- EXACT → flight org • returning sso [Error] (Does this have an error?)  ----
   - id: EXACT_FL_RET_SSO_E_ERROR
     description: "Initial | Exact match. Context |Flight access, Returning user, SSO auth, Email identifier [Error]"
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -239,6 +270,7 @@ tests:
   # ---------- EXACT → flight org • first-login sso (EmployeeID) [Error] ----
   - id: EXACT_FL_FIRST_SSO_ID_ERROR
     description: "Initial | Exact match. Context |Flight access, First login, SSO auth, EmployeeID identifier [Error]."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -252,6 +284,7 @@ tests:
   # ---------- EXACT → flight org • returning pwd (EmployeeID) [Error] ----
   - id: EXACT_FL_RET_PASS_ID_ERROR
     description: "Initial | Exact match. Context |Flight access, Returning user, Password auth, EmployeeID identifier [Error]."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -265,6 +298,7 @@ tests:
   # ---------- EXACT → flight org • first-login pwd (EmployeeID) [Error] ----
   - id: EXACT_FL_FIRST_PASS_ID_ERROR
     description: "Initial | Exact match. Context |Flight access, First login, Password auth, EmployeeID identifier [Error]."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -278,6 +312,7 @@ tests:
   # ---------- EXACT → flight org • returning sso (EmployeeID) [sso Error] ----
   - id: EXACT_FL_RET_SSO_ID_ERROR
     description: "Initial | Exact match. Context |Flight access, Returning user, SSO auth, EmployeeID identifier [Error]."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -291,6 +326,7 @@ tests:
   ##---------- EXACT → flight org • returning sso (EmployeeID) [sso cancel Error] ----
   - id: EXACT_FL_RET_SSO_ID_ERROR_CANCEL
     description: "Initial | Exact match. Context |Flight access, Returning user, SSO auth, EmployeeID identifier [Cancel Error]."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -301,26 +337,10 @@ tests:
       - success       # initiateSSOAction → SSORedirectView
       - cancelled     # SSORedirectView → UsernameEntryView [Cancel Error]
 
-  ## ---------- EXACT → flight org • returning password (email) | forgot password [Error] ----
-  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_ERROR
-    description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password [Error]"
-    context:
-      resolver_match: exact
-      flight_access: "yes"
-      first_login: "no"
-      login_method: password
-      identifier_type: email
-    events:
-      - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
-      - forgotPasswordEmailLinkSuccess      # ForgotPasswordEmailLinkView → UpdatePasswordView
-      - processToken                        # UpdatePasswordView (frontend detects token from URL) → resolvePasswordResetTokenAction
-      - valid                               # resolvePasswordResetTokenAction → UpdatePasswordView (UI shows password fields, token is valid)
-      - updatePassword                      # UpdatePasswordView → UpdatePasswordAction
-      - failure                             # UpdatePasswordAction → UpdatePasswordView
-
   ## ---------- EXACT → flight org • returning password (email) | forgot password ----
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW
     description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password"
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -329,58 +349,11 @@ tests:
       identifier_type: email
     events:
       - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
-      - forgotPasswordEmailLinkSuccess      # ForgotPasswordEmailLinkView → UpdatePasswordView
-      - processToken                        # UpdatePasswordView (frontend detects token from URL) → resolvePasswordResetTokenAction
-      - valid                               # resolvePasswordResetTokenAction → UpdatePasswordView (UI shows password fields, token is valid)
-      - updatePassword                      # UpdatePasswordView → UpdatePasswordAction
-      - success                             # UpdatePasswordAction → LoggedInView
-
-  ## ---------- EXACT → flight org • returning password (email) | forgot password | skip ----
-  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_SKIP
-    description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password, skip"
-    context:
-      resolver_match: exact
-      flight_access: "yes"
-      first_login: "no"
-      login_method: password
-      identifier_type: email
-    events:
-      - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
-      - forgotPasswordEmailLinkSuccess      # ForgotPasswordEmailLinkView → UpdatePasswordView
-      - processToken                        # UpdatePasswordView (frontend detects token from URL) → resolvePasswordResetTokenAction
-      - valid                               # resolvePasswordResetTokenAction → UpdatePasswordView (UI shows password fields, token is valid)
-      - skip                                # UpdatePasswordAction → LoggedInView
-
-  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_BAD_TOKEN_1
-    description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password, bad token 1"
-    context:
-      resolver_match: exact
-      flight_access: "yes"
-      first_login: "no"
-      login_method: password
-      identifier_type: email
-    events:
-      - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
-      - forgotPasswordEmailLinkSuccess      # ForgotPasswordEmailLinkView → UpdatePasswordView
-      - processToken                        # UpdatePasswordView (frontend detects token from URL) → resolvePasswordResetTokenAction
-      - invalid                             # resolvePasswordResetTokenAction → UpdatePasswordView (UI Error, token is invalid)
-
-  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_BAD_TOKEN_2
-    description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password, bad token 2"
-    context:
-      resolver_match: exact
-      flight_access: "yes"
-      first_login: "no"
-      login_method: password
-      identifier_type: email
-    events:
-      - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
-      - forgotPasswordEmailLinkSuccess      # ForgotPasswordEmailLinkView → UpdatePasswordView
-      - processToken                        # UpdatePasswordView (frontend detects token from URL) → resolvePasswordResetTokenAction
-      - expired                             # resolvePasswordResetTokenAction → UpdatePasswordView (UI Error, token is invalid)
+      - success                             # sendResetEmailAction → ForgotPasswordEmailLinkView
 
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW_RESEND_EMAIL
     description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password, resend email"
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -388,15 +361,14 @@ tests:
       login_method: password
       identifier_type: email
     events:
-      - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
-      - resendEmail                         # ForgotPasswordEmailLinkView → sendResetEmailAction
-      - success                             # sendResetEmailAction → UpdatePasswordView
-      - processToken                        # UpdatePasswordView (frontend detects token from URL) → resolvePasswordResetTokenAction
-      - valid                               # resolvePasswordResetTokenAction → UpdatePasswordView (UI shows password fields, token is valid)
-      - skip                                # UpdatePasswordAction → LoggedInView
+      - forgotPassword                      # PasswordEntryView → sendResetEmailAction
+      - success                             # sendResetEmailAction → ForgotPasswordEmailLinkView
+      - resendEmail                         # ForgotPasswordEmailLinkView → sendResetEmailAction  
+      - success                             # sendResetEmailAction → ForgotPasswordEmailLinkView
 
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW_RESEND_EMAIL_ERROR
     description: "Initial | Exact match. Context | Flight access, Returning user, password auth, email identifier, forgot password, resend email, error"
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: exact
       flight_access: "yes"
@@ -404,9 +376,54 @@ tests:
       login_method: password
       identifier_type: email
     events:
-      - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
-      - resendEmail                         # ForgotPasswordEmailLinkView → sendResetEmailAction
-      - error                               # sendResetEmailAction → UpdatePasswordView
+      - forgotPassword                      # PasswordEntryView → sendResetEmailAction
+      - error                               # sendResetEmailAction → ForgotPasswordEmailLinkView (with error)
+
+  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_TOKEN_LANDING_SUCCESS
+    description: "User lands on UpdatePasswordView via email link, token is validated, password updated successfully."
+    initial_state: UpdatePasswordView
+    context: # This context reflects the user's state prior to clicking the email link
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+      # Initial state for this test is effectively UpdatePasswordView, triggered by token in URL
+    events:
+      # Event 1: Frontend detects token, state machine is in UpdatePasswordView, processToken is dispatched
+      - processToken        # UpdatePasswordView → resolvePasswordResetTokenAction
+      # Event 2: Token validation is successful
+      - valid               # resolvePasswordResetTokenAction → UpdatePasswordView (context: token_is_valid=true)
+      # Event 3: User submits new password
+      - updatePassword      # UpdatePasswordView → updatePasswordAction
+      # Event 4: Password update is successful
+      - success             # updatePasswordAction → LoggedInView
+
+  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_TOKEN_LANDING_INVALID_TOKEN
+    description: "User lands on UpdatePasswordView via email link, token validation fails (invalid)."
+    initial_state: UpdatePasswordView
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+    events:
+      - processToken        # UpdatePasswordView → resolvePasswordResetTokenAction
+      - invalid             # resolvePasswordResetTokenAction → UpdatePasswordView (context: token_is_valid=false, error_id: INVALID_RESET_TOKEN)
+
+  - id: EXACT_FL_RET_PASS_E_FORGOT_PW_TOKEN_LANDING_EXPIRED_TOKEN
+    description: "User lands on UpdatePasswordView via email link, token validation fails (expired)."
+    initial_state: UpdatePasswordView
+    context:
+      resolver_match: exact
+      flight_access: "yes"
+      first_login: "no"
+      login_method: password
+      identifier_type: email
+    events:
+      - processToken        # UpdatePasswordView → resolvePasswordResetTokenAction
+      - expired             # resolvePasswordResetTokenAction → UpdatePasswordView (context: token_is_valid=false, error_id: EXPIRED_RESET_TOKEN)
 
   # ###############################################################
   # # ===  SECTION 2 : resolver_match == multiple               ===
@@ -415,6 +432,7 @@ tests:
   # ---------- MULTIPLE → flight org • returning pwd ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_E
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, Email identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -434,6 +452,7 @@ tests:
   # ---------- MULTIPLE → flight org • first-login sso ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, SSO auth, Email identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -452,6 +471,7 @@ tests:
   # ---------- MULTIPLE → flight org • returning sso ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_SSO_E
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, SSO auth, Email identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -470,6 +490,7 @@ tests:
   # ---------- MULTIPLE → flight org • first-login pwd ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_PASS_E
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, Password auth, Email identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -491,6 +512,7 @@ tests:
   # ---------- MULTIPLE → flight org • first-login pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_PASS_ID
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, Password auth, EmployeeID identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -512,6 +534,7 @@ tests:
   # ---------- MULTIPLE → flight org • first-login sso (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_ID
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, SSO auth, EmployeeID identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -530,6 +553,7 @@ tests:
   # ---------- MULTIPLE → flight org • returning sso (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_SSO_ID
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, SSO auth, EmployeeID identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -548,6 +572,7 @@ tests:
   # ---------- MULTIPLE → flight org • returning pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_ID
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, EmployeeID identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -571,6 +596,7 @@ tests:
     # # ---------- MULTIPLE → flight org • returning pwd • Forgot Passwd----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_E_FORGOT_PW
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, Email identifier), forgot password."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -592,6 +618,7 @@ tests:
   # # ---------- MULTIPLE → flight org • first-login sso • Forgot Password ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E_FORGOT_PW
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, SSO auth, Email identifier), forgot password."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -611,6 +638,7 @@ tests:
     # # ---------- MULTIPLE → flight org • first-login sso • Cancel SSO ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E_CANCEL_SSO
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, SSO auth, Email identifier), cancel SSO."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -630,6 +658,7 @@ tests:
   # ---------- MULTIPLE → flight org • first-login pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_PASS_ID
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, Password auth, EmployeeID identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -651,6 +680,7 @@ tests:
   # ---------- MULTIPLE → flight org • returning pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_ID
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, EmployeeID identifier)."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     context:
       resolver_match: multiple
       identifier_type: email
@@ -672,6 +702,7 @@ tests:
   # ###############################################################
   - id: NONE_FL_E_DMY_SUBMITUSER_THEN_EXACT_FL_RET_PASS_ID
     description: "Initial | No match (Flight access, Email identifier, Domain match Yes). User prompted to use EmployeeID."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     # initial ctx used only up to the first resolveUsernameAction
     context:
       resolver_match: none
@@ -693,6 +724,7 @@ tests:
 
   - id: NONE_FL_E_DMY_SUBMITUSER_THEN_EXACT_FL_FIRST_PASS_ID
     description: "Initial | No match (Flight access, Email identifier, Domain match Yes). User prompted to use EmployeeID."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     # initial ctx used only up to the first resolveUsernameAction
     context:
       resolver_match: none
@@ -716,6 +748,7 @@ tests:
 
   - id: NONE_EID_NDM_SUBMITUSER_THEN_ERROR_NONE_EID_NDM
     description: "Initial | No match (EmployeeID identifier, Domain match No). Retry resolve from EmployeeIDCompanyPicker succeeds."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     # initial ctx used only up to the first resolveUsernameAction
     context:
       resolver_match: none
@@ -736,8 +769,9 @@ tests:
       - createPassword                # SetupPasswordView → createPasswordAction
       - success                       # createPasswordAction → LoggedInView
 
-  - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC
+  - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_1
     description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account."
+    initial_state: resolver_branch
     # initial ctx used only up to the first resolveUsernameAction
     context:
       resolver_match: none
@@ -745,17 +779,81 @@ tests:
       identifier_type: email
       domain_match: "yes"
     events:
-      - passwordEmailLinkSuccess    # PasswordEmailLinkView → sendPasswordEmailLinkAction
+      - success            # sendPasswordEmailLinkAction → PasswordEmailLinkView
+
+  - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_1_BAD_INITIAL_SEND
+    description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, bad initial send"
+    initial_state: resolver_branch
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "no"
+      identifier_type: email
+      domain_match: "yes"
+    events:
+      - error            # sendPasswordEmailLinkAction → PasswordEmailLinkView [error]
+
+  - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_1_RESEND
+    description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, resend"
+    initial_state: resolver_branch
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "no"
+      identifier_type: email
+      domain_match: "yes"
+    events:
+      - success            # sendPasswordEmailLinkAction → PasswordEmailLinkView
+      - resendEmail        # Transition from 'PasswordEmailLinkView' on 'resendEmail' → 'sendPasswordEmailLinkAction'
+      - success            # 
+
+  - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_2_TOKEN
+    description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, token processing"
+    initial_state: SetupPasswordView
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "no"
+      identifier_type: email
+      domain_match: "yes"
+    events:
       - processToken                # SetupPasswordView (frontend detects token from URL) → resolvePasswordSetupTokenAction
       - valid                       # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
       - createPassword              # SetupPasswordView → createPasswordAction
       - success                     # createPasswordAction → LoggedInView
 
-  # ------------------------------------------------------------#
-  # -------------------- Error States --------------------------#
-  # ------------------------------------------------------------#
+  - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_2_TOKEN_INVALID
+    description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, token processing=invalid"
+    initial_state: SetupPasswordView
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "no"
+      identifier_type: email
+      domain_match: "yes"
+    events:
+      - processToken                # SetupPasswordView (frontend detects token from URL) → resolvePasswordSetupTokenAction
+      - invalid                       # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
+
+  - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_2_TOKEN_EXPIRED
+    description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, token processing=expired"
+    initial_state: SetupPasswordView
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "no"
+      identifier_type: email
+      domain_match: "yes"
+    events:
+      - processToken                # SetupPasswordView (frontend detects token from URL) → resolvePasswordSetupTokenAction
+      - expired                     # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
+
+  # # ------------------------------------------------------------#
+  # # -------------------- Error States --------------------------#
+  # # ------------------------------------------------------------#
   - id: NONE_FL_E_DMY_SUBMITUSER_THEN_ERROR_NONE_FL_E_DMY
     description: "Initial | No match (Flight access, Email identifier, Domain match Yes). Retry resolve fails, user stays on prompt with error."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
     # initial ctx used only up to the first resolveUsernameAction
     context:
       resolver_match: none
@@ -768,6 +866,7 @@ tests:
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_ERROR
     description: "Initial | No match (Flight access, Email identifier, Domain match Yes). Retry resolve fails, user stays on prompt with error."
+    initial_state: SetupPasswordView
     # initial ctx used only up to the first resolveUsernameAction
     context:
       resolver_match: none
@@ -775,8 +874,40 @@ tests:
       identifier_type: email
       domain_match: "yes"
     events:
-      - passwordEmailLinkSuccess    # PasswordEmailLinkView → sendPasswordEmailLinkAction 
       - processToken                # SetupPasswordView (frontend detects token from URL) → resolvePasswordSetupTokenAction
       - valid                       # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
       - createPassword              # SetupPasswordView → createPasswordAction
       - failure                     # createPasswordAction → SetupPasswordView
+
+  - id: BAD_USERNAME
+    description: "Initial | No match (No Flight access, Email identifier, Domain match No). User does not proceed."
+    initial_state: resolver_branch
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "no"
+      identifier_type: email
+      domain_match: "no"  # this switch should only matten when resolver_match=none
+      came_from_org_picker: "no"
+    events:
+      - #error                     # resolveUsernameAction → EmployeeUsernamePromptView [error]
+
+  - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_E_FORGOT_PW_NONE_REMATCH
+    description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, Email identifier), none rematch."
+    initial_state: resolver_branch # this defaults to resolver_branch when blank
+    context:
+      resolver_match: multiple
+      identifier_type: email
+    events:
+      - organizationSelected    # OrganizationPickerView → resolveUsernameAction
+      -
+        type: exact
+        context:
+          resolver_match: none
+          domain_match: "no"
+          flight_access: "no"
+          first_login: "yes"
+          login_method: password
+          identifier_type: email
+          came_from_org_picker: "yes"
+      - # nothing

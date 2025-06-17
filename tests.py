@@ -27,6 +27,7 @@ def run_tests(sm_custom_output_stream): # MODIFIED to accept stream for StateMac
         test_id = t.get('id', 'N/A')
         test_description = t.get('description', 'No description')
         initial_context = t.get("context", {})
+        initial_state_from_yaml = t.get("initial_state") # Get initial_state
 
         print(f"--- Test Case Start ---", file=sm_custom_output_stream)
         print(f"ID: {test_id}", file=sm_custom_output_stream)
@@ -38,7 +39,11 @@ def run_tests(sm_custom_output_stream): # MODIFIED to accept stream for StateMac
         print(f"\n=== Running test: {test_id} — {test_description} ===")
         
         # Instantiate StateMachine with the custom output stream
-        sm = StateMachine(initial_context, output_stream=sm_custom_output_stream)
+        sm = StateMachine(
+            ctx=initial_context,
+            output_stream=sm_custom_output_stream,
+            initial_state=initial_state_from_yaml # Pass it here
+        )
 
         # 1) Get the first view
         result = sm.step()

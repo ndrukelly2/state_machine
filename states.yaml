@@ -11,6 +11,7 @@ states:
   organization_picker_result_switch: { type: switch,        expression: organization_picker_result }
   non_flight_first_login_switch:     { type: switch,        expression: first_login }
   flight_access_after_domain_switch: { type: switch,        expression: flight_access }
+  check_came_from_org_picker_switch: { type: switch,        expression: came_from_org_picker } # New state
 
 
   # ─── action nodes ──────────────────────────────────────────
@@ -52,24 +53,31 @@ states:
   non_flight_account_creation_subflow:
     type: sub-flow
     flow:
-    - PasswordEmailLinkView
-    - sendPasswordEmailLinkAction
-    - SetupPasswordView
-    - createPasswordAction 
-    - LoggedInView
+      - sendPasswordEmailLinkAction   # Automatically send the setup email using context's email
+      - PasswordEmailLinkView         # UI: "Setup email sent." Option to resend.
+      # Flow ends here for this interaction. User clicks email link from their inbox.
+      # SetupPasswordView will be initiated by the frontend upon URL navigation with a token.
 
   forgotPw_subflow:
     type: sub-flow
     flow:
-      - ForgotPasswordEmailLinkView
-      - sendResetEmailAction          # On success, transitions to UpdatePasswordView
-      # UpdatePasswordView will initially tell the user to check their email.
-      # When the user returns with a token, UpdatePasswordView's UI will trigger token processing.
-      - UpdatePasswordView
-      - updatePasswordAction          # After successful token validation and password update
-      - LoggedInView
+      - sendResetEmailAction          # Automatically send the reset email
+      - ForgotPasswordEmailLinkView   # UI: "Reset email sent." Option to resend.
+      # Flow ends here for this interaction. User clicks email link from their inbox.
+      # UpdatePasswordView will be initiated by the frontend upon URL navigation with a token
 
   # ─── atomic UI views (each can display errors) ───────────────
+  OrganizationPickerView:
+    type: view
+    interface: organizationPickerUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - identifier
+      - company_code  # EG Airline code
+      - company_display_name
+      - show_username_on_picker # This is a flag to show the username field on the picker.
+ 
   UsernameEntryView:
     type: view
     interface: usernameEntryUI
@@ -78,6 +86,32 @@ states:
     include_context_keys:
       #- username # Example: if you want to pre-fill username if available in context
       #- last_login_attempt_status # Example: if you want to show some status
+
+  PasswordEmailLinkView:
+    type: view
+    interface: passwordEmailLinkUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - identifier
+      - email # This could be null if not available.
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the pior state before going to email.
+      - prompt_check_email # This is a flag to show the email check prompt.
+  
+  ForgotPasswordEmailLinkView:
+    type: view
+    interface: forgotPasswordEmailLinkUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      - identifier
+      - email # This could be null if not available.
+      - company_code  # EG Airline code
+      - company_display_name
+      - token # This represents the pior state before going to email.
+      - prompt_check_email # This is a flag to show the email check prompt.
 
   TempPasswordEntryView:
     type: view
@@ -111,7 +145,11 @@ states:
       - email # This could be null if not available.
       - company_code  # EG Airline code
       - company_display_name
-      - token # This represents the pior state before going to email.
+      # 'token' here might refer to a session token, not the password setup token itself,
+      # as the setup token is processed. Or it could be a flag like 'token_is_valid'.
+      # Let's assume 'token_is_valid' and 'prompt_check_email' are set by resolvePasswordSetupTokenAction.
+      - token_is_valid
+      - prompt_check_email
 
   UpdatePasswordView:
     type: view
@@ -123,47 +161,12 @@ states:
       - email # This could be null if not available.
       - company_code  # EG Airline code
       - company_display_name
-      - token # This represents the pior state before going to email.
+      # Similar to SetupPasswordView, 'token_is_valid' and 'prompt_check_email' are key.
 
-  PasswordEmailLinkView:
-    type: view
-    interface: passwordEmailLinkUI
-    error_id: null
-    cs_contact: false
-    include_context_keys:
-      - identifier
-      - email # This could be null if not available.
-      - company_code  # EG Airline code
-      - company_display_name
-      - token # This represents the pior state before going to email.
-  
   SSORedirectView:
     type: view
     interface: SSORedirectUI
-    error_id: null
-    cs_contact: false
-    include_context_keys:
-      - sso_url
-      - token # This represents the prior state before going to SSO.
-      - identifier # This is the user identifier for the SSO flow.
-      - email # if we have it
-      - company_code  # EG Airline code
-      - company_display_name
-  
-  LoggedInView:
-    type: view
-    interface: loggedInUI
-    error_id: null
-    cs_contact: false
-    include_context_keys:
-      - username
-      - display_name
-      - access_token # whatever is passed today to get all user context
-      #- ?
-
-  ForgotPasswordEmailLinkView:
-    type: view
-    interface: forgotPasswordEmailLinkUI
+    # This view is typically a redirect, so it may not have a specific error_id.
     error_id: null
     cs_contact: false
     include_context_keys:
@@ -171,17 +174,16 @@ states:
       - email # This could be null if not available.
       - company_code  # EG Airline code
       - company_display_name
-      - token # This represents the pior state before going to email.
-  
-  OrganizationPickerView:
+      - sso_url # The URL to redirect to for SSO login
+      # Similar to SetupPasswordView, 'token_is_valid' and 'prompt_check_email' are key.
+
+  LoggedInView:
     type: view
-    interface: organizationPickerUI
+    interface: loggedInUI # Or whatever interface it uses
     error_id: null
+    cs_contact: false # Or true, as appropriate
     include_context_keys:
-      - company_list # This is a list of companies available 
-      - identifier # This is the user identifier for the picker
-      - email # This could be null if not available.
-      - company_code  # EG Airline code
-      - company_display_name
-      - token # This represents the prior state before going to organization picker.
+      - username
+      - access_token # If you pass this
+      - prompt_for_email_on_login # If applicable
 
