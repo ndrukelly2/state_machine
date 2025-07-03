@@ -2,10 +2,7 @@ transitions:
   # ─── initial resolve split ─────────────────────────────────
   resolver_branch:
     exact:    flight_access_switch
-    multiple: 
-      target: OrganizationPickerView
-      set_context: 
-        show_username_on_picker: true # This flag will be set in the context
+    multiple: multiple_match_handler_switch # Route to new switch for handling multiple matches
     none:     username_type_switch
 
   # ─── EXACT branch (account exists) ────────────────────────
@@ -36,6 +33,12 @@ transitions:
   non_flight_first_login_switch:
     "yes":  non_flight_account_creation_subflow  # account-creation flow
     "no":   flight_password_returning_subflow    # normal returning pwd flow
+
+  # ─── NEW: Handle multiple matches intelligently ─────────────
+  multiple_match_handler_switch:
+    "true": NameDeduplicationView # If came from org picker, user needs to de-duplicate
+    "false": OrganizationPickerView # Otherwise, it's the first time, show the org picker
+    null: OrganizationPickerView # CORRECTED: Default case for when context is not set
 
   # ─── MULTIPLE branch (user picks an org) ──────────────────
   OrganizationPickerView:
@@ -90,7 +93,7 @@ transitions:
 
   resolveUsernameAction:
     exact:    resolver_branch
-    multiple: resolver_branch # This already targets OrganizationPickerView correctly
+    multiple: resolver_branch # This will be routed by multiple_match_handler_switch
     # first‐time "none" still just shows the prompt (no error)
     none:
       target: OrganizationPickerView
@@ -102,6 +105,12 @@ transitions:
       set_context:
         show_username_on_picker: true
       error_id: RESOLVE_NO_MATCH_001
+
+  deduplicateNameAction:
+    exact: resolver_branch # On success, go back to the main branch to find the exact path
+    none:
+      target: NameDeduplicationView
+      error_id: DEDUP_NO_MATCH # On failure, stay on the view and show an error
 
   initiateSSOAction:
     success: SSORedirectView
@@ -173,6 +182,9 @@ transitions:
   # ─── View transitions (explicit events) ────────────────────
   UsernameEntryView:
     submitUsername: resolveUsernameAction
+
+  NameDeduplicationView:
+    submitName: deduplicateNameAction
 
   PasswordEntryView:
     submitPassword: verifyPasswordAction

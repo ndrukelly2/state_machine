@@ -12,6 +12,7 @@ states:
   non_flight_first_login_switch:     { type: switch,        expression: first_login }
   flight_access_after_domain_switch: { type: switch,        expression: flight_access }
   check_came_from_org_picker_switch: { type: switch,        expression: came_from_org_picker } # New state
+  multiple_match_handler_switch:   { type: switch,        expression: came_from_org_picker } # New switch for deduplication
 
 
   # ─── action nodes ──────────────────────────────────────────
@@ -26,6 +27,8 @@ states:
   updatePasswordAction:            { type: action }
   resolvePasswordResetTokenAction: { type: action } # Ensure this exists
   resolvePasswordSetupTokenAction: { type: action } # Ensure this exists
+  deduplicateNameAction:           { type: action }
+
 
   # ─── sub-flows (re-usable chains) ───────────────────────────
   flight_password_first_login_subflow:
@@ -67,6 +70,16 @@ states:
       # UpdatePasswordView will be initiated by the frontend upon URL navigation with a token
 
   # ─── atomic UI views (each can display errors) ───────────────
+  
+  UsernameEntryView:
+    type: view
+    interface: usernameEntryUI
+    error_id: null
+    cs_contact: false
+    include_context_keys:
+      #- username # Example: if you want to pre-fill username if available in context
+      #- last_login_attempt_status # Example: if you want to show some status
+  
   OrganizationPickerView:
     type: view
     interface: organizationPickerUI
@@ -77,15 +90,16 @@ states:
       - company_code  # EG Airline code
       - company_display_name
       - show_username_on_picker # This is a flag to show the username field on the picker.
- 
-  UsernameEntryView:
+
+  NameDeduplicationView:
     type: view
-    interface: usernameEntryUI
-    error_id: null
+    interface: nameDeduplicationUI          # ← your new React/Vue/Svelte screen
+    error_id: null                          # set on mismatch / still‑multiple
     cs_contact: false
     include_context_keys:
-      #- username # Example: if you want to pre-fill username if available in context
-      #- last_login_attempt_status # Example: if you want to show some status
+      - identifier                          # employeeID the user originally typed
+      - company_code
+      - company_display_name
 
   PasswordEmailLinkView:
     type: view
@@ -186,4 +200,3 @@ states:
       - username
       - access_token # If you pass this
       - prompt_for_email_on_login # If applicable
-

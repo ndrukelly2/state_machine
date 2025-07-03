@@ -1,3 +1,8 @@
+Of course. It's important to keep your documentation in sync with your code. I've updated the `README.md` to include the new `NameDeduplicationView` and its related events and error codes.
+
+Here is the updated content for your `README.md` file:
+
+````markdown
 # YAML-Driven State Machine For ID90 Account Access
 
 This project implements a login state machine driven by YAML configuration files. It includes implementations in both JavaScript (untested) and Python (tested), along with test runners for validating state transitions based on scenarios defined in `tests.yaml`.
@@ -34,46 +39,51 @@ ctx_options = {
         "no"        // submitted email's domain does not match
     ]
 }
-```
+````
 
 ## Features
-*   **YAML Configuration**: States and transitions are defined in `states.yaml` and `transitions.yaml`.
-*   **Dual Implementations**: Available in JavaScript ([state_machine.js](state_machine.js)) and Python ([state_machine.py](state_machine.py)).
-*   **Test Suite**: Scenarios are defined in `tests.yaml` and can be run using [test.js](test.js) (for the JavaScript version) or [tests.py](tests.py) (for the Python version).
-*   **Debug Output**: Both implementations provide detailed console output for tracing state transitions and context changes.
+
+  * **YAML Configuration**: States and transitions are defined in `states.yaml` and `transitions.yaml`.
+  * **Dual Implementations**: Available in JavaScript ([state\_machine.js](https://www.google.com/search?q=state_machine.js)) and Python ([state\_machine.py](https://www.google.com/search?q=state_machine.py)).
+  * **Test Suite**: Scenarios are defined in `tests.yaml` and can be run using [test.js](https://www.google.com/search?q=test.js) (for the JavaScript version) or [tests.py](https://www.google.com/search?q=tests.py) (for the Python version).
+  * **Debug Output**: Both implementations provide detailed console output for tracing state transitions and context changes.
 
 ## Interface Names
-*   All interface names should match what is defined in the Access Flows spreadsheet linked here (with one exception that our state machine appends 'UI' to each name): https://docs.google.com/spreadsheets/d/17uMH_2Ncsnen4JV32JcyiDsDuHLbaZYvdPp1-0moz0I/edit?usp=sharing
-*   This is also the same spreadsheet linked in our Confluence Documentation
-*   Note that all the Condition/Event names in this spreadsheet are a bit different than what is in this state machine as they were initially placeholders.
+
+  * All interface names should match what is defined in the Access Flows spreadsheet linked here (with one exception that our state machine appends 'UI' to each name): https://docs.google.com/spreadsheets/d/17uMH\_2Ncsnen4JV32JcyiDsDuHLbaZYvdPp1-0moz0I/edit?usp=sharing
+  * This is also the same spreadsheet linked in our Confluence Documentation
+  * Note that all the Condition/Event names in this spreadsheet are a bit different than what is in this state machine as they were initially placeholders.
 
 ## Setup
 
 ### Python [this code is tested and works]
-You'll need Python 3 installed. Install the PyYAML dependency:
-```pip install pyyaml```
 
-To run the code you can set vars at bottom of state_machine.py file and run it:
-```python3 state_machine.py```
+You'll need Python 3 installed. Install the PyYAML dependency:
+`pip install pyyaml`
+
+To run the code you can set vars at bottom of https://www.google.com/search?q=state\_machine.py file and run it:
+`python3 state_machine.py`
 
 To run the test suite that picks up all tests defined in tests.yaml:
-```python3 tests.py```
+`python3 tests.py`
 
 ### JavaScript [this is translated from the python code and is untested]
-You'll need Node.js and npm installed. Install the `js-yaml` dependency:
-```npm install js-yaml```
 
-To run the code you can set vars at bottom of state_machine.js file and run it:
-```node state_machine.js```
+You'll need Node.js and npm installed. Install the `js-yaml` dependency:
+`npm install js-yaml`
+
+To run the code you can set vars at bottom of https://www.google.com/search?q=state\_machine.js file and run it:
+`node state_machine.js`
 
 To run the test suite that picks up all tests defined in tests.yaml:
-```node tests.js```
+`node tests.js`
 
 ## Client-to-Server Communication
 
 ### TypeScript Interface Definitions
 
 #### Base Event Payload
+
 ```typescript
 export interface BaseEventPayload {
   step: string;
@@ -83,6 +93,7 @@ export interface BaseEventPayload {
 ```
 
 #### Username Entry Events
+
 ```typescript
 export interface SubmitUsernamePayload extends BaseEventPayload {
   event: "submitUsername";
@@ -93,6 +104,7 @@ export interface SubmitUsernamePayload extends BaseEventPayload {
 ```
 
 #### Password Entry Events
+
 ```typescript
 export interface SubmitPasswordPayload extends BaseEventPayload {
   event: "submitPassword";
@@ -108,6 +120,7 @@ export interface ForgotPasswordPayload extends BaseEventPayload {
 ```
 
 #### Temporary Password Entry Events
+
 ```typescript
 export interface SubmitTempPasswordPayload extends BaseEventPayload {
   event: "submitPassword";
@@ -118,6 +131,7 @@ export interface SubmitTempPasswordPayload extends BaseEventPayload {
 ```
 
 #### Setup Password Events
+
 ```typescript
 export interface ProcessTokenPayload extends BaseEventPayload {
   event: "processToken";
@@ -136,6 +150,7 @@ export interface CreatePasswordPayload extends BaseEventPayload {
 ```
 
 #### Update Password Events
+
 ```typescript
 export interface ProcessResetTokenPayload extends BaseEventPayload {
   event: "processToken";
@@ -159,6 +174,7 @@ export interface SkipPasswordUpdatePayload extends BaseEventPayload {
 ```
 
 #### Forgot Password Email Events
+
 ```typescript
 export interface SubmitForgotPasswordEmailPayload extends BaseEventPayload {
   event: "forgotPasswordEmailLinkSuccess";
@@ -174,6 +190,7 @@ export interface ResendForgotPasswordEmailPayload extends BaseEventPayload {
 ```
 
 #### Password Email Link Events
+
 ```typescript
 export interface PasswordEmailLinkSuccessPayload extends BaseEventPayload {
   event: "passwordEmailLinkSuccess";
@@ -186,6 +203,7 @@ export interface ResendPasswordEmailPayload extends BaseEventPayload {
 ```
 
 #### SSO Redirect Events [unsure if this is how we should handle sso flows.....]
+
 ```typescript
 export interface SSOContinuePayload extends BaseEventPayload {
   event: "continue";
@@ -210,7 +228,9 @@ export interface SSOCancelledPayload extends BaseEventPayload {
 ```
 
 #### Organization Picker Events [basically another resolve call from here but with company info added]
+
 ##### Note: When a employeeID is submitted as the identifier we will want to math with a "LIKE" db call. Our goal here is to let users login with their employeeID even in cases when they were told to put special characters around it. For example both "AA12345" and "12345" would work as the identifier because we are also passing companyCode (eg AA). This is a big CS call driver.
+
 ```typescript
 export interface OrganizationSelectedPayload extends BaseEventPayload {
   event: "organizationSelected";
@@ -221,8 +241,20 @@ export interface OrganizationSelectedPayload extends BaseEventPayload {
 }
 ```
 
+#### Name Deduplication Events
+
+```typescript
+export interface SubmitNamePayload extends BaseEventPayload {
+  event: "submitName";
+  data: {
+    firstName: string;
+    lastName: string;
+  };
+}
+```
 
 ### Union Type for All Events
+
 ```typescript
 export type StateMachineEventPayload = 
   | SubmitUsernamePayload
@@ -242,6 +274,7 @@ export type StateMachineEventPayload =
   | SSOFailurePayload
   | SSOCancelledPayload
   | OrganizationSelectedPayload
+  | SubmitNamePayload
 ```
 
 ## Server-to-Client Communication
@@ -251,6 +284,7 @@ export type StateMachineEventPayload =
 Each UI interface receives a payload containing specific variables. Here's what each interface receives:
 
 #### UsernameEntryView (`usernameEntryUI`)
+
 ```typescript
 interface UsernameEntryViewPayload {
   token?: string;
@@ -263,6 +297,7 @@ interface UsernameEntryViewPayload {
 ```
 
 #### TempPasswordEntryView (`tempPasswordEntryUI`)
+
 ```typescript
 interface TempPasswordEntryViewPayload {
   token: string;
@@ -277,6 +312,7 @@ interface TempPasswordEntryViewPayload {
 ```
 
 #### PasswordEntryView (`passwordEntryUI`)
+
 ```typescript
 interface PasswordEntryViewPayload {
   token: string;
@@ -292,7 +328,9 @@ interface PasswordEntryViewPayload {
 ```
 
 #### SetupPasswordView (`setupPasswordUI`)
+
 ##### Password setup email links will be directed to this interface. When clicking on the email link they will be redirect here with and then passed the token from the tokenized link in the email. The server will then validate the token, and if valid, will be able to create their new password.
+
 ```typescript
 interface SetupPasswordViewPayload {
   token: string; 
@@ -310,7 +348,9 @@ interface SetupPasswordViewPayload {
 ```
 
 #### UpdatePasswordView (`updatePasswordUI`)
+
 ##### Password update email links will be directed to this interface. When clicking on the email link they will be redirect here with and then passed the token from the tokenized link in the email. The server will then validate the token, and if valid, will be able to create their new password.
+
 ```typescript
 interface UpdatePasswordViewPayload {
   token: string;
@@ -328,6 +368,7 @@ interface UpdatePasswordViewPayload {
 ```
 
 #### PasswordEmailLinkView (`passwordEmailLinkUI`)
+
 ```typescript
 interface PasswordEmailLinkViewPayload {
   token: string;
@@ -343,7 +384,9 @@ interface PasswordEmailLinkViewPayload {
 ```
 
 #### SSORedirectView (`ssoRedirectUI`)
-##### Note: we do not actually render this interface. This is just to trigger the redirect to users SSO endpoint. 
+
+##### Note: we do not actually render this interface. This is just to trigger the redirect to users SSO endpoint.
+
 ```typescript
 interface SSORedirectViewPayload {
   token: string;
@@ -359,6 +402,7 @@ interface SSORedirectViewPayload {
 ```
 
 #### LoggedInView (`loggedInUI`)
+
 ```typescript
 interface LoggedInViewPayload {
   token: string;
@@ -373,6 +417,7 @@ interface LoggedInViewPayload {
 ```
 
 #### ForgotPasswordEmailLinkView (`forgotPasswordEmailLinkUI`)
+
 ```typescript
 interface ForgotPasswordEmailLinkViewPayload {
   token: string;
@@ -388,7 +433,9 @@ interface ForgotPasswordEmailLinkViewPayload {
 ```
 
 #### OrganizationPickerView (`organizationPickerUI`)
+
 ##### This essentially fires the resolve() call again but with the company code + identfier combined. If a user picks a company from the drop down that is SSO by default, we want to launch their SSO redirect and not require the username at all (this is how it works today).
+
 ```typescript
 interface OrganizationPickerViewPayload {
   state_id: "OrganizationPickerView";
@@ -405,22 +452,42 @@ interface OrganizationPickerViewPayload {
 }
 ```
 
+#### NameDeduplicationView (`nameDeduplicationUI`)
+
+##### This view is shown when a user's employeeID + company combination matches multiple accounts. The user can enter their first and last name to resolve the ambiguity.
+
+```typescript
+interface NameDeduplicationViewPayload {
+  state_id: "NameDeduplicationView";
+  interface: "nameDeduplicationUI";
+  cs_contact: boolean;
+  identifier: string;         // The employeeID that was originally entered
+  company_code: string;
+  company_display_name: string;
+  token?: string;
+  error_id?: "DEDUP_NO_MATCH" | null; // Shown if the name submission fails
+}
+```
+
 ### Error Handling
 
 All interfaces can receive error identifiers in the `error_id` field:
-- `EMAIL_LINK_ERR_1` - Error sending account setup email
-- `EMAIL_LINK_ERR_2` - Error sending password reset email
-- `SSO_CANCELLED` - User cancelled SSO process
-- `RESOLVE_NO_MATCH_001` - Username resolution failed
-- `INVALID_RESET_TOKEN` - Password reset token is invalid
-- `EXPIRED_RESET_TOKEN` - Password reset token has expired
-- `INVALID_SETUP_TOKEN` - Password setup token is invalid
-- `EXPIRED_SETUP_TOKEN` - Password setup token has expired
-- `CREATE_PW_FAILED` - Password creation failed
-- `UPDATE_PW_FAILED` - Password update failed
+
+  - `DEDUP_NO_MATCH` - Name submission failed to find a single matching record
+  - `EMAIL_LINK_ERR_1` - Error sending account setup email
+  - `EMAIL_LINK_ERR_2` - Error sending password reset email
+  - `SSO_CANCELLED` - User cancelled SSO process
+  - `RESOLVE_NO_MATCH_001` - Username resolution failed
+  - `INVALID_RESET_TOKEN` - Password reset token is invalid
+  - `EXPIRED_RESET_TOKEN` - Password reset token has expired
+  - `INVALID_SETUP_TOKEN` - Password setup token is invalid
+  - `EXPIRED_SETUP_TOKEN` - Password setup token has expired
+  - `CREATE_PW_FAILED` - Password creation failed
+  - `UPDATE_PW_FAILED` - Password update failed
 
 ### Customer Support Contact
 
 Views with `cs_contact: true` will include this flag in their payload, indicating that customer support contact options should be displayed to the user.
 
-
+```
+```

@@ -425,9 +425,9 @@ tests:
       - processToken        # UpdatePasswordView → resolvePasswordResetTokenAction
       - expired             # resolvePasswordResetTokenAction → UpdatePasswordView (context: token_is_valid=false, error_id: EXPIRED_RESET_TOKEN)
 
-  # ###############################################################
-  # # ===  SECTION 2 : resolver_match == multiple               ===
-  # ###############################################################
+  ###############################################################
+  # ===  SECTION 2 : resolver_match == multiple               ===
+  ###############################################################
 
   # ---------- MULTIPLE → flight org • returning pwd ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_E
@@ -589,11 +589,11 @@ tests:
       - submitPassword
       - success
 
-  # # ------------------------------------------------------------#
-  # # -------------------- Error States --------------------------#
-  # # ------------------------------------------------------------#
+  # ------------------------------------------------------------#
+  # -------------------- Error States --------------------------#
+  # ------------------------------------------------------------#
 
-    # # ---------- MULTIPLE → flight org • returning pwd • Forgot Passwd----
+    # ---------- MULTIPLE → flight org • returning pwd • Forgot Passwd----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_E_FORGOT_PW
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, Email identifier), forgot password."
     initial_state: resolver_branch # this defaults to resolver_branch when blank
@@ -615,7 +615,7 @@ tests:
       - submitPassword       # PasswordEntryView → verifyPasswordAction
       - success               # verifyPasswordAction → LoggedInView 
 
-  # # ---------- MULTIPLE → flight org • first-login sso • Forgot Password ----
+  # ---------- MULTIPLE → flight org • first-login sso • Forgot Password ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E_FORGOT_PW
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, SSO auth, Email identifier), forgot password."
     initial_state: resolver_branch # this defaults to resolver_branch when blank
@@ -635,7 +635,7 @@ tests:
       - success # initiateSSOAction → SSORedirectView
       - failure # SSORedirectView → UsernameEntryView [Error] 
 
-    # # ---------- MULTIPLE → flight org • first-login sso • Cancel SSO ----
+    # ---------- MULTIPLE → flight org • first-login sso • Cancel SSO ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E_CANCEL_SSO
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, First login, SSO auth, Email identifier), cancel SSO."
     initial_state: resolver_branch # this defaults to resolver_branch when blank
@@ -697,9 +697,9 @@ tests:
       - submitPassword       # PasswordEntryView → verifyPasswordAction
       - invalidPassword      # verifyPasswordAction → PasswordEntryView
 
-  # ###############################################################
-  # # ===  SECTION 3 : resolver_match == none                   ===
-  # ###############################################################
+  ###############################################################
+  # ===  SECTION 3 : resolver_match == none                   ===
+  ###############################################################
   - id: NONE_FL_E_DMY_SUBMITUSER_THEN_EXACT_FL_RET_PASS_ID
     description: "Initial | No match (Flight access, Email identifier, Domain match Yes). User prompted to use EmployeeID."
     initial_state: resolver_branch # this defaults to resolver_branch when blank
@@ -848,9 +848,9 @@ tests:
       - processToken                # SetupPasswordView (frontend detects token from URL) → resolvePasswordSetupTokenAction
       - expired                     # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
 
-  # # ------------------------------------------------------------#
-  # # -------------------- Error States --------------------------#
-  # # ------------------------------------------------------------#
+  # ------------------------------------------------------------#
+  # -------------------- Error States --------------------------#
+  # ------------------------------------------------------------#
   - id: NONE_FL_E_DMY_SUBMITUSER_THEN_ERROR_NONE_FL_E_DMY
     description: "Initial | No match (Flight access, Email identifier, Domain match Yes). Retry resolve fails, user stays on prompt with error."
     initial_state: resolver_branch # this defaults to resolver_branch when blank
@@ -911,3 +911,58 @@ tests:
           identifier_type: email
           came_from_org_picker: "yes"
       - # nothing
+
+  ###############################################################
+  # ===  SECTION 4 : Name Deduplication                       ===
+  ###############################################################
+
+  - id: MULTIPLE_ID_DEDUP_SUCCESS_RET_PASS
+    description: "Multiple ID match -> Org Picker -> Still multiple -> Name Deduplication -> Success -> Returning PWD flow"
+    initial_state: resolver_branch
+    context:
+      resolver_match: multiple
+      identifier_type: employeeid
+    events:
+      # Event 1: User is at OrganizationPickerView and selects a company.
+      # This triggers resolveUsernameAction and sets came_from_org_picker=true
+      - organizationSelected
+      # Event 2: The second resolve still finds multiple matches.
+      # This event simulates that outcome. The machine should go to NameDeduplicationView.
+      - type: multiple
+        context:
+          resolver_match: multiple
+      # Event 3: User is at NameDeduplicationView and submits their name.
+      # This triggers deduplicateNameAction.
+      - submitName
+      # Event 4: The name submission is successful, finding an exact match.
+      # Context is updated to reflect a returning user with flight access & password.
+      - type: exact
+        context:
+          resolver_match: exact
+          flight_access: "yes"
+          first_login: "no"
+          login_method: password
+          identifier_type: employeeid
+      # Event 5: Now in PasswordEntryView, user submits password.
+      - submitPassword
+      # Event 6: Verification is successful, user is logged in.
+      - success
+
+  - id: MULTIPLE_ID_DEDUP_FAILURE
+    description: "Multiple ID match -> Org Picker -> Still multiple -> Name Deduplication -> Failure"
+    initial_state: resolver_branch
+    context:
+      resolver_match: multiple
+      identifier_type: employeeid
+    events:
+      # Event 1: User selects a company from the picker.
+      - organizationSelected
+      # Event 2: The second resolve still finds multiple matches.
+      - type: multiple
+        context:
+          resolver_match: multiple
+      # Event 3: User submits their name for deduplication.
+      - submitName
+      # Event 4: The name submission fails to find a unique record.
+      # The machine should return to NameDeduplicationView with an error.
+      - none
