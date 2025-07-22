@@ -62,13 +62,13 @@ transitions:
   check_came_from_org_picker_switch: # New switch transitions
     "yes":
       target: OrganizationPickerView
-      error_id: DOMAIN_NOT_RECOGNIZED_POST_PICK # Specific error for this case
+      error_id: auth_0030 # Specific error for this case
       set_context:
         came_from_org_picker: false # Clear the flag
         show_username_on_picker: true # Ensure picker UI is correct
     "no": # Default or not set (or explicitly "false")
       target: UsernameEntryView
-      error_id: DOMAIN_NOT_RECOGNIZED # Original error
+      error_id: AUTH_0004 # Original error
       set_context: { came_from_org_picker: false } # Ensure flag is cleared
 
   flight_access_after_domain_switch:
@@ -81,14 +81,14 @@ transitions:
   # ─── Credential verification (action) ─────────────────────
   verifyTempPasswordAction:
     success:          SetupPasswordView
-    invalidPassword: { target: TempPasswordEntryView, error_id: TEMP_PW_001 }
-    accountLocked:   { target: TempPasswordEntryView, error_id: TEMP_LOCK_002 }
+    invalidPassword: { target: TempPasswordEntryView, error_id: AUTH_0013 }
+    accountLocked:   { target: TempPasswordEntryView, error_id: AUTH_0014 }
     forgotPassword:  forgotPw_subflow
 
   verifyPasswordAction:
     success:          LoggedInView
-    invalidPassword: { target: PasswordEntryView, error_id: LOGIN_PW_001 }
-    accountLocked:   { target: PasswordEntryView, error_id: LOGIN_LOCK_002 }
+    invalidPassword: { target: PasswordEntryView, error_id: AUTH_0005 }
+    accountLocked:   { target: PasswordEntryView, error_id: AUTH_0006 }
     forgotPassword:  forgotPw_subflow
 
   resolveUsernameAction:
@@ -104,13 +104,13 @@ transitions:
       target: OrganizationPickerView
       set_context:
         show_username_on_picker: true
-      error_id: RESOLVE_NO_MATCH_001
+      error_id: AUTH_0015
 
   deduplicateNameAction:
     exact: resolver_branch # On success, go back to the main branch to find the exact path
     none:
       target: NameDeduplicationView
-      error_id: DEDUP_NO_MATCH # On failure, stay on the view and show an error
+      error_id: AUTH_0017 # On failure, stay on the view and show an error
 
   initiateSSOAction:
     success: SSORedirectView
@@ -122,12 +122,12 @@ transitions:
   # ─── Specific to new account setup emails ─────────────────────────
   sendPasswordEmailLinkAction:
     success: PasswordEmailLinkView # Transition to the view confirming email was sent
-    error: { target: PasswordEmailLinkView, error_id: EMAIL_LINK_ERR_1 } # Or another appropriate error view
+    error: { target: PasswordEmailLinkView, error_id: AUTH_0008 } # Or another appropriate error view
 
   # ─── Specific to forgot password flow ─────────────────────────
   sendResetEmailAction:
     success: ForgotPasswordEmailLinkView # Transition to the view confirming email was sent
-    error: { target: ForgotPasswordEmailLinkView, error_id: EMAIL_LINK_ERR_2, set_context: { prompt_check_email: false } }
+    error: { target: ForgotPasswordEmailLinkView, error_id: AUTH_0009, set_context: { prompt_check_email: false } }
 
   # Action to verify the password reset token from the email link
   resolvePasswordResetTokenAction:
@@ -141,13 +141,13 @@ transitions:
       set_context:
         token_is_valid: false
         prompt_check_email: false
-      error_id: INVALID_RESET_TOKEN
+      error_id: AUTH_0019
     expired:
       target: UpdatePasswordView # Or could be ForgotPasswordEmailLinkView with error
       set_context:
         token_is_valid: false
         prompt_check_email: false
-      error_id: EXPIRED_RESET_TOKEN
+      error_id: AUTH_0020
 
   # Action to verify the password setup token from the email link
   resolvePasswordSetupTokenAction:
@@ -161,23 +161,34 @@ transitions:
       set_context:
         token_is_valid: false
         prompt_check_email: false
-      error_id: INVALID_SETUP_TOKEN
+      error_id: AUTH_0021
     expired:
       target: SetupPasswordView # Or could be PasswordEmailLinkView with error
       set_context:
         token_is_valid: false
         prompt_check_email: false
-      error_id: EXPIRED_SETUP_TOKEN
+      error_id: AUTH_0022
 
   # Section for createPasswordAction
   createPasswordAction:
     success: LoggedInView
-    failure: { target: SetupPasswordView, error_id: CREATE_PW_FAILED }
+    failure: { target: SetupPasswordView, error_id: AUTH_0023 }
+    weakPassword:
+      target: SetupPasswordView
+      error_id: AUTH_0025
 
   # Section for updatePasswordAction
   updatePasswordAction:
     success: LoggedInView
-    failure: { target: UpdatePasswordView, error_id: UPDATE_PW_FAILED }
+    failure: { target: UpdatePasswordView, error_id: AUTH_0024 }
+    weakPassword:
+      target: UpdatePasswordView
+      error_id: AUTH_0025
+
+  # ─── Global events ──────────────────────────────────────────
+  sessionExpired:
+    target: UsernameEntryView
+    error_id: AUTH_0003
 
   # ─── View transitions (explicit events) ────────────────────
   UsernameEntryView:
@@ -195,8 +206,8 @@ transitions:
 
   SSORedirectView:
     continue:  LoggedInView                                             # IdP success
-    failure:   { target: UsernameEntryView, error_id: SSO_FAIL_001 }    # IdP sent error
-    cancelled: { target: UsernameEntryView, error_id: SSO_CANCELLED }   # user closed the window
+    failure:   { target: UsernameEntryView, error_id: AUTH_0012 }    # IdP sent error
+    cancelled: { target: UsernameEntryView, error_id: AUTH_0011 }   # user closed the window
 
   ForgotPasswordEmailLinkView:
     resendEmail: sendResetEmailAction # Only allows resending the email
