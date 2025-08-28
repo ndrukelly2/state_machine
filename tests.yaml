@@ -18,6 +18,7 @@ tests:
       - success             # verifyPasswordAction → SetupPasswordView  
       - createPassword      # SetupPasswordView → createPasswordAction
       - success             # createPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- EXACT → flight org • first-login sso ----
   - id: EXACT_FL_FIRST_SSO_E
@@ -31,6 +32,7 @@ tests:
       identifier_type: email
     events:
       - success # initiateSSOAction → SSORedirectView → LoggedInView
+    final_state: {"state_id": "SSORedirectView", "interface": "SSORedirectUI"}
 
   # ---------- EXACT → flight org • returning pwd ----
   - id: EXACT_FL_RET_PASS_E
@@ -45,6 +47,7 @@ tests:
     events:
       - submitPassword     # PasswordEntryView → verifyPasswordAction
       - success             # verifyPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- EXACT → non-flight org • returning pwd ----
   - id: EXACT_NFL_RET_PASS_E
@@ -59,6 +62,7 @@ tests:
     events:
       - submitPassword    # PasswordEntryView → verifyPasswordAction
       - success            # verifyPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- EXACT → flight org • returning sso ----
   - id: EXACT_FL_RET_SSO_E
@@ -72,6 +76,7 @@ tests:
       identifier_type: email
     events:
       - success         # initiateSSOAction → SSORedirectView → LoggedInView
+    final_state: {"state_id": "SSORedirectView", "interface": "SSORedirectUI"}
 
   # ---------- EXACT → flight org • first-login sso (EmployeeID) ----
   - id: EXACT_FL_FIRST_SSO_ID
@@ -85,6 +90,7 @@ tests:
       identifier_type: employeeid
     events:
       - success     # initiateSSOAction → SSORedirectView → LoggedInView
+    final_state: {"state_id": "SSORedirectView", "interface": "SSORedirectUI"}
 
   # ---------- EXACT → flight org • returning pwd (EmployeeID) ----
   - id: EXACT_FL_RET_PASS_ID
@@ -99,6 +105,7 @@ tests:
     events:            
       - submitPassword         # PasswordEntryView → verifyPasswordAction
       - success                 # verifyPasswordAction → LoggedInView 
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- EXACT → flight org • first-login pwd (EmployeeID) ----
   - id: EXACT_FL_FIRST_PASS_ID
@@ -115,6 +122,7 @@ tests:
       - success               # verifyPasswordAction → SetupPasswordView
       - createPassword      # SetupPasswordView → createPasswordAction
       - success             # createPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- EXACT → flight org • returning sso (EmployeeID) ----
   - id: EXACT_FL_RET_SSO_ID
@@ -128,6 +136,7 @@ tests:
       identifier_type: employeeid
     events:
       - success     # initiateSSOAction → SSORedirectView → LoggedInView
+    final_state: {"state_id": "SSORedirectView", "interface": "SSORedirectUI"}
 
   # ---------- EXACT → flight org • returning password (email) | forgot password ----
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW
@@ -142,6 +151,7 @@ tests:
     events:
       - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
       - success
+    final_state: {"state_id": "ForgotPasswordEmailLinkView", "interface": "forgotPasswordEmailLinkUI"}
 
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW_TOKEN_LANDING
     description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password, token landing"
@@ -161,6 +171,7 @@ tests:
       - updatePassword      # UpdatePasswordView → updatePasswordAction
       # Event 4: Password update is successful
       - success             # updatePasswordAction → LoggedInView 
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
  # # # ---------- EXACT → flight org • returning password (email) | forgot password ----
  # # - id: EXACT_FL_RET_PASS_E_FORGOT_PW_EMPLOYEEID
@@ -196,6 +207,7 @@ tests:
     events:
       - submitPassword     # TempPasswordView → createPasswordAction
       - invalidPassword    # verifyPasswordAction → SetupPasswordView  
+    final_state: {"state_id": "TempPasswordEntryView", "interface": "tempPasswordEntryUI", "error_id": "AUTH_0013", "cs_contact": true}
 
   # ---------- EXACT → flight org • first-login pwd [Error] ----
   - id: EXACT_FL_PASS_E_ERROR_ACCOUNT_LOCKED
@@ -210,6 +222,7 @@ tests:
     events:
       - submitPassword      # PasswordEntryView → verifyPasswordAction
       - accountLocked       # verifyPasswordAction → PasswordEntryView
+    final_state: {"state_id": "PasswordEntryView", "interface": "passwordEntryUI", "error_id": "AUTH_0006"}
 
   # ---------- EXACT → flight org • first-login sso [Error] ----
   - id: EXACT_FL_FIRST_SSO_E_ERROR
@@ -224,6 +237,7 @@ tests:
     events:
       - success     # initiateSSOAction → SSORedirectView
       - failure     # SSORedirectView → UsernameEntryView [Error]
+    final_state: {"state_id": "UsernameEntryView", "interface": "usernameEntryUI", "error_id": "AUTH_0012"}
 
   # ---------- EXACT → flight org • returning pwd [Error] ----
   - id: EXACT_FL_RET_PASS_E_ERROR
@@ -237,7 +251,8 @@ tests:
       identifier_type: email
     events:
       - submitPassword      # PasswordEntryView → verifyPasswordAction
-      - invalidPassword    # verifyPasswordAction → LoggedInView
+      - invalidPassword    # verifyPasswordAction → PasswordEntryView
+    final_state: {"state_id": "PasswordEntryView", "interface": "passwordEntryUI", "error_id": "AUTH_0005"}
 
   # ---------- EXACT → non-flight org • returning pwd [Error] ----
   - id: EXACT_NFL_RET_PASS_E_ERROR
@@ -251,7 +266,8 @@ tests:
       identifier_type: email
     events:
       - submitPassword      # PasswordEntryView → verifyPasswordAction
-      - invalidPassword    # verifyPasswordAction → LoggedInView
+      - invalidPassword    # verifyPasswordAction → PasswordEntryView
+    final_state: {"state_id": "PasswordEntryView", "interface": "passwordEntryUI", "error_id": "AUTH_0005"}
 
   # ---------- EXACT → flight org • returning sso [Error] (Does this have an error?)  ----
   - id: EXACT_FL_RET_SSO_E_ERROR
@@ -266,6 +282,7 @@ tests:
     events:
       - success     # initiateSSOAction → SSORedirectView
       - failure     # SSORedirectView → UsernameEntryView [Error]
+    final_state: {"state_id": "UsernameEntryView", "interface": "usernameEntryUI", "error_id": "AUTH_0012"}
 
   # ---------- EXACT → flight org • first-login sso (EmployeeID) [Error] ----
   - id: EXACT_FL_FIRST_SSO_ID_ERROR
@@ -280,6 +297,7 @@ tests:
     events:
       - success     # initiateSSOAction → SSORedirectView
       - failure     # SSORedirectView → UsernameEntryView [Error]
+    final_state: {"state_id": "UsernameEntryView", "interface": "usernameEntryUI", "error_id": "AUTH_0012"}
 
   # ---------- EXACT → flight org • returning pwd (EmployeeID) [Error] ----
   - id: EXACT_FL_RET_PASS_ID_ERROR
@@ -294,6 +312,7 @@ tests:
     events:            
       - submitPassword        # TempPasswordView → verifyPasswordAction
       - invalidPassword      # verifyPasswordAction → verifyPasswordAction
+    final_state: {"state_id": "PasswordEntryView", "interface": "passwordEntryUI", "error_id": "AUTH_0005"}
 
   # ---------- EXACT → flight org • first-login pwd (EmployeeID) [Error] ----
   - id: EXACT_FL_FIRST_PASS_ID_ERROR
@@ -308,6 +327,7 @@ tests:
     events:
       - submitPassword        # TempPasswordView → verifyPasswordAction
       - invalidPassword      # verifyPasswordAction → verifyPasswordAction
+    final_state: {"state_id": "TempPasswordEntryView", "interface": "tempPasswordEntryUI", "error_id": "AUTH_0013", "cs_contact": true}
 
   # ---------- EXACT → flight org • returning sso (EmployeeID) [sso Error] ----
   - id: EXACT_FL_RET_SSO_ID_ERROR
@@ -322,6 +342,7 @@ tests:
     events:
       - success       # initiateSSOAction → SSORedirectView
       - failure       # SSORedirectView → UsernameEntryView [Error]
+    final_state: {"state_id": "UsernameEntryView", "interface": "usernameEntryUI", "error_id": "AUTH_0012"}
 
   ##---------- EXACT → flight org • returning sso (EmployeeID) [sso cancel Error] ----
   - id: EXACT_FL_RET_SSO_ID_ERROR_CANCEL
@@ -336,6 +357,7 @@ tests:
     events:
       - success       # initiateSSOAction → SSORedirectView
       - cancelled     # SSORedirectView → UsernameEntryView [Cancel Error]
+    final_state: {"state_id": "UsernameEntryView", "interface": "usernameEntryUI", "error_id": "AUTH_0011"}
 
   ## ---------- EXACT → flight org • returning password (email) | forgot password ----
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW
@@ -350,6 +372,7 @@ tests:
     events:
       - forgotPassword                      # PasswordEntryView → ForgotPasswordEmailLinkView
       - success                             # sendResetEmailAction → ForgotPasswordEmailLinkView
+    final_state: {"state_id": "ForgotPasswordEmailLinkView", "interface": "forgotPasswordEmailLinkUI"}
 
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW_RESEND_EMAIL
     description: "Initial | Exact match. Context |Flight access, Returning user, password auth, email identifier, forgot password, resend email"
@@ -365,6 +388,7 @@ tests:
       - success                             # sendResetEmailAction → ForgotPasswordEmailLinkView
       - resendEmail                         # ForgotPasswordEmailLinkView → sendResetEmailAction  
       - success                             # sendResetEmailAction → ForgotPasswordEmailLinkView
+    final_state: {"state_id": "ForgotPasswordEmailLinkView", "interface": "forgotPasswordEmailLinkUI"}
 
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW_RESEND_EMAIL_ERROR
     description: "Initial | Exact match. Context | Flight access, Returning user, password auth, email identifier, forgot password, resend email, error"
@@ -378,6 +402,7 @@ tests:
     events:
       - forgotPassword                      # PasswordEntryView → sendResetEmailAction
       - error                               # sendResetEmailAction → ForgotPasswordEmailLinkView (with error)
+    final_state: {"state_id": "ForgotPasswordEmailLinkView", "interface": "forgotPasswordEmailLinkUI", "error_id": "AUTH_0009"}
 
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW_TOKEN_LANDING_SUCCESS
     description: "User lands on UpdatePasswordView via email link, token is validated, password updated successfully."
@@ -398,6 +423,7 @@ tests:
       - updatePassword      # UpdatePasswordView → updatePasswordAction
       # Event 4: Password update is successful
       - success             # updatePasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW_TOKEN_LANDING_INVALID_TOKEN
     description: "User lands on UpdatePasswordView via email link, token validation fails (invalid)."
@@ -411,6 +437,7 @@ tests:
     events:
       - processToken        # UpdatePasswordView → resolvePasswordResetTokenAction
       - invalid             # resolvePasswordResetTokenAction → UpdatePasswordView (context: token_is_valid=false, error_id: INVALID_RESET_TOKEN)
+    final_state: {"state_id": "UpdatePasswordView", "interface": "updatePasswordUI", "error_id": "AUTH_0019"}
 
   - id: EXACT_FL_RET_PASS_E_FORGOT_PW_TOKEN_LANDING_EXPIRED_TOKEN
     description: "User lands on UpdatePasswordView via email link, token validation fails (expired)."
@@ -424,6 +451,7 @@ tests:
     events:
       - processToken        # UpdatePasswordView → resolvePasswordResetTokenAction
       - expired             # resolvePasswordResetTokenAction → UpdatePasswordView (context: token_is_valid=false, error_id: EXPIRED_RESET_TOKEN)
+    final_state: {"state_id": "UpdatePasswordView", "interface": "updatePasswordUI", "error_id": "AUTH_0020"}
 
   ###############################################################
   # ===  SECTION 2 : resolver_match == multiple               ===
@@ -448,6 +476,7 @@ tests:
           identifier_type: email
       - submitPassword       # PasswordEntryView → verifyPasswordAction
       - success               # verifyPasswordAction → LoggedInView 
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- MULTIPLE → flight org • first-login sso ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E
@@ -467,6 +496,7 @@ tests:
           login_method: sso
           identifier_type: email
       - success                      # initiateSSOAction → SSORedirectView → LoggedInView 
+    final_state: {"state_id": "SSORedirectView", "interface": "SSORedirectUI"}
 
   # ---------- MULTIPLE → flight org • returning sso ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_SSO_E
@@ -486,6 +516,7 @@ tests:
           login_method: sso
           identifier_type: email
       - success                   # initiateSSOAction → SSORedirectView → LoggedInView  
+    final_state: {"state_id": "SSORedirectView", "interface": "SSORedirectUI"}
 
   # ---------- MULTIPLE → flight org • first-login pwd ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_PASS_E
@@ -508,6 +539,7 @@ tests:
       - success             # verifyPasswordAction → SetupPasswordView 
       - createPassword      # SetupPasswordView → createPasswordAction
       - success             # createPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- MULTIPLE → flight org • first-login pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_PASS_ID
@@ -530,6 +562,7 @@ tests:
       - success             # verifyPasswordAction → SetupPasswordView 
       - createPassword      # SetupPasswordView → createPasswordAction
       - success             # createPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- MULTIPLE → flight org • first-login sso (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_ID
@@ -549,6 +582,7 @@ tests:
           login_method: sso
           identifier_type: employeeid
       - success             # initiateSSOAction → SSORedirectView → LoggedInView
+    final_state: {"state_id": "SSORedirectView", "interface": "SSORedirectUI"}
 
   # ---------- MULTIPLE → flight org • returning sso (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_SSO_ID
@@ -568,6 +602,7 @@ tests:
           login_method: sso
           identifier_type: employeeid
       - success                 # initiateSSOAction → SSORedirectView → LoggedInView 
+    final_state: {"state_id": "SSORedirectView", "interface": "SSORedirectUI"}
 
   # ---------- MULTIPLE → flight org • returning pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_ID
@@ -588,6 +623,7 @@ tests:
           identifier_type: employeeid
       - submitPassword
       - success
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ------------------------------------------------------------#
   # -------------------- Error States --------------------------#
@@ -614,6 +650,7 @@ tests:
       - invalidPassword      # verifyPasswordAction → SetupPasswordView
       - submitPassword       # PasswordEntryView → verifyPasswordAction
       - success               # verifyPasswordAction → LoggedInView 
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   # ---------- MULTIPLE → flight org • first-login sso • Forgot Password ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E_FORGOT_PW
@@ -634,6 +671,7 @@ tests:
           identifier_type: email
       - success # initiateSSOAction → SSORedirectView
       - failure # SSORedirectView → UsernameEntryView [Error] 
+    final_state: {"state_id": "UsernameEntryView", "interface": "usernameEntryUI", "error_id": "AUTH_0012"}
 
     # ---------- MULTIPLE → flight org • first-login sso • Cancel SSO ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_SSO_E_CANCEL_SSO
@@ -654,6 +692,7 @@ tests:
           identifier_type: email
       - success # initiateSSOAction → SSORedirectView
       - cancelled # SSORedirectView → UsernameEntryView [Cancel Error] 
+    final_state: {"state_id": "UsernameEntryView", "interface": "usernameEntryUI", "error_id": "AUTH_0011"}
 
   # ---------- MULTIPLE → flight org • first-login pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_FIRST_PASS_ID
@@ -676,6 +715,7 @@ tests:
       - success             # verifyPasswordAction → SetupPasswordView 
       - createPassword      # SetupPasswordView → createPasswordAction
       - failure             # createPasswordAction → SetupPasswordView
+    final_state: {"state_id": "SetupPasswordView", "interface": "setupPasswordUI", "error_id": "AUTH_0023"}
 
   # ---------- MULTIPLE → flight org • returning pwd (EmployeeID) ----
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_ID
@@ -696,6 +736,7 @@ tests:
           identifier_type: employeeid
       - submitPassword       # PasswordEntryView → verifyPasswordAction
       - invalidPassword      # verifyPasswordAction → PasswordEntryView
+    final_state: {"state_id": "PasswordEntryView", "interface": "passwordEntryUI", "error_id": "AUTH_0005"}
 
   ###############################################################
   # ===  SECTION 3 : resolver_match == none                   ===
@@ -721,6 +762,7 @@ tests:
           identifier_type: employeeid
       - submitPassword              # PasswordEntryView → verifyPasswordAction
       - success                      # verifyPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   - id: NONE_FL_E_DMY_SUBMITUSER_THEN_EXACT_FL_FIRST_PASS_ID
     description: "Initial | No match (Flight access, Email identifier, Domain match Yes). User prompted to use EmployeeID."
@@ -745,6 +787,7 @@ tests:
       - success               # verifyPasswordAction → SetupPasswordView
       - createPassword        # SetupPasswordView → createPasswordAction
       - success               # createPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   - id: NONE_EID_NDM_SUBMITUSER_THEN_ERROR_NONE_EID_NDM
     description: "Initial | No match (EmployeeID identifier, Domain match No). Retry resolve from EmployeeIDCompanyPicker succeeds."
@@ -768,6 +811,7 @@ tests:
       - success                       # verifyPasswordAction → SetupPasswordView
       - createPassword                # SetupPasswordView → createPasswordAction
       - success                       # createPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_1
     description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account."
@@ -780,6 +824,7 @@ tests:
       domain_match: "yes"
     events:
       - success            # sendPasswordEmailLinkAction → PasswordEmailLinkView
+    final_state: {"state_id": "PasswordEmailLinkView", "interface": "passwordEmailLinkUI"}
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_1_BAD_INITIAL_SEND
     description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, bad initial send"
@@ -792,6 +837,7 @@ tests:
       domain_match: "yes"
     events:
       - error            # sendPasswordEmailLinkAction → PasswordEmailLinkView [error]
+    final_state: {"state_id": "PasswordEmailLinkView", "interface": "passwordEmailLinkUI", "error_id": "AUTH_0008"}
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_1_RESEND
     description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, resend"
@@ -806,6 +852,7 @@ tests:
       - success            # sendPasswordEmailLinkAction → PasswordEmailLinkView
       - resendEmail        # Transition from 'PasswordEmailLinkView' on 'resendEmail' → 'sendPasswordEmailLinkAction'
       - success            # 
+    final_state: {"state_id": "PasswordEmailLinkView", "interface": "passwordEmailLinkUI"}
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_2_TOKEN
     description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, token processing"
@@ -821,6 +868,7 @@ tests:
       - valid                       # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
       - createPassword              # SetupPasswordView → createPasswordAction
       - success                     # createPasswordAction → LoggedInView
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_2_TOKEN_INVALID
     description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, token processing=invalid"
@@ -834,6 +882,7 @@ tests:
     events:
       - processToken                # SetupPasswordView (frontend detects token from URL) → resolvePasswordSetupTokenAction
       - invalid                       # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
+    final_state: {"state_id": "SetupPasswordView", "interface": "setupPasswordUI", "error_id": "AUTH_0021"}
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_2_TOKEN_EXPIRED
     description: "Initial | No match (No Flight access, Email identifier, Domain match Yes). User prompted to create an account, token processing=expired"
@@ -847,6 +896,7 @@ tests:
     events:
       - processToken                # SetupPasswordView (frontend detects token from URL) → resolvePasswordSetupTokenAction
       - expired                     # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
+    final_state: {"state_id": "SetupPasswordView", "interface": "setupPasswordUI", "error_id": "AUTH_0022"}
 
   # ------------------------------------------------------------#
   # -------------------- Error States --------------------------#
@@ -862,7 +912,8 @@ tests:
       domain_match: "yes"
     events:
       - organizationSelected      # EmployeeUsernamePromptView → resolveUsernameAction
-      - error                        # resolveUsernameAction → EmployeeUsernamePromptView
+      - error                     # resolveUsernameAction → OrganizationPickerView
+    final_state: {"state_id": "OrganizationPickerView", "interface": "organizationPickerUI", "error_id": "AUTH_0015"}
 
   - id: NONE_NF_FIRST_PASS_E_DMY_CREATEACC_ERROR
     description: "Initial | No match (Flight access, Email identifier, Domain match Yes). Retry resolve fails, user stays on prompt with error."
@@ -878,8 +929,9 @@ tests:
       - valid                       # resolvePasswordSetupTokenAction → SetupPasswordView (UI shows password fields, token is valid)
       - createPassword              # SetupPasswordView → createPasswordAction
       - failure                     # createPasswordAction → SetupPasswordView
+    final_state: {"state_id": "SetupPasswordView", "interface": "setupPasswordUI", "error_id": "AUTH_0023"}
 
-  - id: BAD_USERNAME
+  - id: BAD_USERNAME_EMAIL
     description: "Initial | No match (No Flight access, Email identifier, Domain match No). User does not proceed."
     initial_state: resolver_branch
     # initial ctx used only up to the first resolveUsernameAction
@@ -888,9 +940,39 @@ tests:
       flight_access: "no"
       identifier_type: email
       domain_match: "no"  # this switch should only matten when resolver_match=none
-      came_from_org_picker: "no"
+      came_from_org_picker: "false"
+    events: []
+    final_state:
+      state_id: UsernameEntryView
+      interface: usernameEntryUI
+      error_id: AUTH_0004
+
+  - id: BAD_USERNAME_EMPLOYEE_ID
+    description: "Initial | No match (No Flight access, Employee ID identifier, Domain match No). User does not proceed."
+    initial_state: resolver_branch
+    # initial ctx used only up to the first resolveUsernameAction
+    context:
+      resolver_match: none
+      flight_access: "no"
+      identifier_type: employeeid
+      domain_match: "no"  # this switch should only matten when resolver_match=none
+      came_from_org_picker: "false"
     events:
-      - #error                     # resolveUsernameAction → EmployeeUsernamePromptView [error]
+      - organizationSelected    # OrganizationPickerView → resolveUsernameAction
+      -
+        type: exact
+        context:
+          resolver_match: none
+          domain_match: "no"
+          flight_access: "no"
+          first_login: "yes"
+          login_method: password
+          identifier_type: employeeid
+          came_from_org_picker: "true"
+    final_state:
+      state_id: OrganizationPickerView
+      interface: organizationPickerUI
+      error_id: AUTH_0030
 
   - id: MULTIPLE_E_THEN_EXACT_FL_RET_PASS_E_FORGOT_PW_NONE_REMATCH
     description: "Initial | Multiple matches (Email identifier). Event: organizationSelected returns multiple; resolve again yields exact match (Flight access, Returning user, Password auth, Email identifier), none rematch."
@@ -909,8 +991,8 @@ tests:
           first_login: "yes"
           login_method: password
           identifier_type: email
-          came_from_org_picker: "yes"
-      - # nothing
+          came_from_org_picker: "true"
+    final_state: {"state_id": "OrganizationPickerView", "interface": "organizationPickerUI", "error_id": "AUTH_0030"}
 
   ###############################################################
   # ===  SECTION 4 : Name Deduplication                       ===
@@ -924,13 +1006,14 @@ tests:
       identifier_type: employeeid
     events:
       # Event 1: User is at OrganizationPickerView and selects a company.
-      # This triggers resolveUsernameAction and sets came_from_org_picker=true
+      # This triggers resolveUsernameAction. (Frontend will mark came_from_org_picker=true in the next event.)
       - organizationSelected
       # Event 2: The second resolve still finds multiple matches.
       # This event simulates that outcome. The machine should go to NameDeduplicationView.
       - type: multiple
         context:
           resolver_match: multiple
+          came_from_org_picker: "true"
       # Event 3: User is at NameDeduplicationView and submits their name.
       # This triggers deduplicateNameAction.
       - submitName
@@ -947,6 +1030,7 @@ tests:
       - submitPassword
       # Event 6: Verification is successful, user is logged in.
       - success
+    final_state: {"state_id": "LoggedInView", "interface": "loggedInUI"}
 
   - id: MULTIPLE_ID_DEDUP_FAILURE
     description: "Multiple ID match -> Org Picker -> Still multiple -> Name Deduplication -> Failure"
@@ -961,8 +1045,10 @@ tests:
       - type: multiple
         context:
           resolver_match: multiple
+          came_from_org_picker: "true"
       # Event 3: User submits their name for deduplication.
       - submitName
       # Event 4: The name submission fails to find a unique record.
       # The machine should return to NameDeduplicationView with an error.
       - none
+    final_state: {"state_id": "NameDeduplicationView", "interface": "nameDeduplicationUI", "error_id": "AUTH_0017"}

@@ -90,7 +90,8 @@ class StateMachine:
                 self._apply_context_updates(context_updates)
                 if nxt is None:
                     raise RuntimeError(f"No edge for value '{val}' from switch '{self.cur}'")
-                self.cur, self.pending_error = nxt, None 
+                #self.cur, self.pending_error = nxt, None 
+                self.cur = nxt
                 event = None
                 continue
 
