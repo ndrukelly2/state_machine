@@ -50,7 +50,19 @@ transitions:
   # ─── NONE branch (help the user) ──────────────────────────
   username_type_switch:
     email:      domain_flight_access_switch
-    employeeid:
+    employeeid: employeeid_came_from_picker_switch
+
+  employeeid_came_from_picker_switch:
+    "true":
+      target: OrganizationPickerView
+      error_id: AUTH_0030
+      set_context:
+        show_username_on_picker: true
+    "false":
+      target: OrganizationPickerView
+      set_context:
+        show_username_on_picker: true
+    null:
       target: OrganizationPickerView
       set_context:
         show_username_on_picker: true

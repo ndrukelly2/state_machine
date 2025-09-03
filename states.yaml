@@ -13,7 +13,7 @@ states:
   flight_access_after_domain_switch: { type: switch,        expression: flight_access }
   check_came_from_org_picker_switch: { type: switch,        expression: came_from_org_picker } # New state
   multiple_match_handler_switch:   { type: switch,        expression: came_from_org_picker } # New switch for deduplication
-
+  employeeid_came_from_picker_switch: { type: switch, expression: came_from_org_picker }
 
   # ─── action nodes ──────────────────────────────────────────
   resolveUsernameAction:           { type: action }
